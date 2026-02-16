@@ -17,6 +17,16 @@ export default function AddVisitPage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,22 +34,40 @@ export default function AddVisitPage() {
 
     // Simulate API call
     setTimeout(() => {
-      alert("Visit added successfully!");
       setLoading(false);
-      router.push(`/patients/${patientId}/visits`);
+      setSuccess(true);
+
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        router.push(`/patients/${patientId}/visits`);
+      }, 2000);
     }, 1000);
   };
 
   return (
     <div style={{ padding: "2rem", maxWidth: "600px" }}>
       <h1
-        style={{ fontSize: "2rem", color: "#2563eb", marginBottom: "0.5rem" }}
+        style={{ fontSize: "2rem", color: "#0b2b4a", marginBottom: "0.5rem" }}
       >
         Add New Visit
       </h1>
       <p style={{ color: "#666", marginBottom: "2rem" }}>
         Patient ID: {patientId}
       </p>
+
+      {success && (
+        <div
+          style={{
+            background: "#d4edda",
+            color: "#155724",
+            padding: "1rem",
+            borderRadius: "4px",
+            marginBottom: "1rem",
+          }}
+        >
+          ✓ Visit added successfully! Redirecting...
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -50,7 +78,7 @@ export default function AddVisitPage() {
           boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
         }}
       >
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <label
             style={{
               display: "block",
@@ -62,19 +90,20 @@ export default function AddVisitPage() {
           </label>
           <input
             type="date"
+            name="date"
             value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
+              padding: "0.5rem",
               border: "1px solid #ccc",
               borderRadius: "4px",
             }}
           />
         </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <label
             style={{
               display: "block",
@@ -85,14 +114,13 @@ export default function AddVisitPage() {
             Reason for Visit *
           </label>
           <select
+            name="reason"
             value={formData.reason}
-            onChange={(e) =>
-              setFormData({ ...formData, reason: e.target.value })
-            }
+            onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
+              padding: "0.5rem",
               border: "1px solid #ccc",
               borderRadius: "4px",
             }}
@@ -105,7 +133,7 @@ export default function AddVisitPage() {
           </select>
         </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <label
             style={{
               display: "block",
@@ -116,14 +144,13 @@ export default function AddVisitPage() {
             Provider *
           </label>
           <select
+            name="provider"
             value={formData.provider}
-            onChange={(e) =>
-              setFormData({ ...formData, provider: e.target.value })
-            }
+            onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
+              padding: "0.5rem",
               border: "1px solid #ccc",
               borderRadius: "4px",
             }}
@@ -135,7 +162,7 @@ export default function AddVisitPage() {
           </select>
         </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
           <label
             style={{
               display: "block",
@@ -146,14 +173,13 @@ export default function AddVisitPage() {
             Notes
           </label>
           <textarea
+            name="notes"
             value={formData.notes}
-            onChange={(e) =>
-              setFormData({ ...formData, notes: e.target.value })
-            }
+            onChange={handleChange}
             rows={4}
             style={{
               width: "100%",
-              padding: "0.75rem",
+              padding: "0.5rem",
               border: "1px solid #ccc",
               borderRadius: "4px",
             }}
@@ -166,8 +192,8 @@ export default function AddVisitPage() {
             type="submit"
             disabled={loading}
             style={{
-              padding: "0.75rem 1.5rem",
-              background: loading ? "#ccc" : "#2563eb",
+              padding: "0.5rem 1rem",
+              background: loading ? "#ccc" : "#0b2b4a",
               color: "white",
               border: "none",
               borderRadius: "4px",
@@ -179,8 +205,8 @@ export default function AddVisitPage() {
           <Link
             href={`/patients/${patientId}`}
             style={{
-              padding: "0.75rem 1.5rem",
-              background: "#6b7280",
+              padding: "0.5rem 1rem",
+              background: "#6c757d",
               color: "white",
               textDecoration: "none",
               borderRadius: "4px",
