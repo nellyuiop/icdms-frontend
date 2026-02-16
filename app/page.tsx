@@ -36,7 +36,7 @@ export default function Home() {
       <div className="profile-header">
         <h1>Welcome to ICDMS</h1>
         <p style={{ fontSize: "1.2rem", opacity: 0.9 }}>
-          Integrated Clinical Data Management System
+          Intelligent Clinical Data Management System
         </p>
         <div style={{ marginTop: "2rem", display: "flex", gap: "1rem" }}>
           <Link href="/patients" className="btn btn-primary">
