@@ -34,7 +34,7 @@ export default function Home() {
     <div className="container" style={{ padding: "2rem 0" }}>
       {/* Welcome Banner */}
       <div className="profile-header">
-        <h1>Welcome to ICDMS</h1>
+        <h1>Welcome to ClinIQ</h1>
         <p style={{ fontSize: "1.2rem", opacity: 0.9 }}>
           Intelligent Clinical Data Management System
         </p>

@@ -33,7 +33,7 @@ export default function Navbar() {
             textDecoration: "none",
           }}
         >
-          ICDMS
+          ClinIQ
         </Link>
 
         <div style={{ display: "flex", gap: "2rem" }}>
