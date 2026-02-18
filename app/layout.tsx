@@ -3,7 +3,7 @@ import Navbar from "../components/Layout/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ICDMS - Integrated Clinical Data Management System",
+  title: "ICDMS - Intelligent Clinical Data Management System",
   description: "Healthcare patient management system for clinicians",
 };
 
