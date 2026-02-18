@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, Calendar, Microscope, FileText } from "lucide-react";
+import { Users, Calendar, Microscope } from "lucide-react";
 
 export default function Home() {
   // Stats for dashboard
@@ -7,7 +7,6 @@ export default function Home() {
     { label: "Total Patients", value: "1,247", icon: Users, change: "+12%" },
     { label: "Today's Visits", value: "28", icon: Calendar, change: "+4" },
     { label: "Pending Labs", value: "16", icon: Microscope, change: "-3" },
-    { label: "Clinical Documents", value: "342", icon: FileText, change: "+23" },
   ];
 
   const recentPatients = [

@@ -76,121 +76,34 @@ export default function PatientProfilePage() {
           >
             Demographics
           </h2>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-          >
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "100px",
-                  display: "inline-block",
-                }}
-              >
+              <strong style={{ color: "var(--gray)", width: "100px", display: "inline-block" }}>
                 DOB:
               </strong>{" "}
               {patient.dob}
             </div>
+
             <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "100px",
-                  display: "inline-block",
-                }}
-              >
+              <strong style={{ color: "var(--gray)", width: "100px", display: "inline-block" }}>
                 Phone:
               </strong>{" "}
               {patient.phone}
             </div>
+
             <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "100px",
-                  display: "inline-block",
-                }}
-              >
+              <strong style={{ color: "var(--gray)", width: "100px", display: "inline-block" }}>
                 Email:
               </strong>{" "}
               {patient.email}
             </div>
+
             <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "100px",
-                  display: "inline-block",
-                }}
-              >
+              <strong style={{ color: "var(--gray)", width: "100px", display: "inline-block" }}>
                 Address:
               </strong>{" "}
               {patient.address}
-            </div>
-          </div>
-        </div>
-
-        {/* Medical Info Card */}
-        <div className="card">
-          <h2
-            style={{
-              color: "var(--primary)",
-              marginBottom: "1.5rem",
-              fontSize: "1.2rem",
-            }}
-          >
-            Medical Information
-          </h2>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-          >
-            <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "120px",
-                  display: "inline-block",
-                }}
-              >
-                Blood Type:
-              </strong>{" "}
-              {patient.bloodType || "Not recorded"}
-            </div>
-            <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "120px",
-                  display: "inline-block",
-                }}
-              >
-                Provider:
-              </strong>{" "}
-              {patient.provider}
-            </div>
-            <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "120px",
-                  display: "inline-block",
-                }}
-              >
-                Last Visit:
-              </strong>{" "}
-              {patient.lastVisit}
-            </div>
-            <div>
-              <strong
-                style={{
-                  color: "var(--gray)",
-                  width: "120px",
-                  display: "inline-block",
-                }}
-              >
-                Allergies:
-              </strong>{" "}
-              {patient.allergies?.join(", ") || "None"}
             </div>
           </div>
         </div>
@@ -198,18 +111,22 @@ export default function PatientProfilePage() {
 
       {/* Action Buttons */}
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        <Link
-          href={`/patients/${patientId}/visits`}
-          className="btn btn-primary"
-        >
+        <Link href={`/patients/${patientId}/visits`} className="btn btn-primary">
           View Visit History
         </Link>
-        <Link
-          href={`/patients/${patientId}/visits/new`}
-          className="btn btn-secondary"
-        >
+
+        <Link href={`/patients/${patientId}/visits/new`} className="btn btn-secondary">
           Add New Visit
         </Link>
+
+        <Link href={`/patients/${patientId}/vitals`} className="btn btn-primary">
+          View Vitals
+        </Link>
+
+        <Link href={`/patients/${patientId}/documents`} className="btn btn-secondary">
+          Documents
+        </Link>
+
         <Link href="/patients" className="btn btn-outline">
           ← Back to Patients
         </Link>
