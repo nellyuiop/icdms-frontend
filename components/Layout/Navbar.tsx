@@ -57,6 +57,20 @@ export default function Navbar() {
           >
             Patients
           </Link>
+           <button
+    onClick={() => alert("Logout clicked (mock)")}
+    style={{
+      background: "#ef4444",
+      color: "white",
+      border: "none",
+      padding: "0.4rem 1rem",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontWeight: "500",
+    }}
+  >
+    Logout
+  </button>
         </div>
       </div>
     </nav>
