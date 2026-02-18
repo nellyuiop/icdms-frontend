@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { Users, Calendar, Microscope, FileText } from "lucide-react";
 
 export default function Home() {
   // Stats for dashboard
   const stats = [
-    { label: "Total Patients", value: "1,247", icon: "👥", change: "+12%" },
-    { label: "Today's Visits", value: "28", icon: "📅", change: "+4" },
-    { label: "Pending Labs", value: "16", icon: "🔬", change: "-3" },
-    { label: "Documents", value: "342", icon: "📄", change: "+23" },
+    { label: "Total Patients", value: "1,247", icon: Users, change: "+12%" },
+    { label: "Today's Visits", value: "28", icon: Calendar, change: "+4" },
+    { label: "Pending Labs", value: "16", icon: Microscope, change: "-3" },
+    { label: "Documents", value: "342", icon: FileText, change: "+23" },
   ];
 
   const recentPatients = [
@@ -57,7 +58,7 @@ export default function Home() {
         {stats.map((stat, index) => (
           <div key={index} className="stat-card">
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-              {stat.icon}
+              <stat.icon size={32} color="#0b2b4a"/>
             </div>
             <div className="stat-value">{stat.value}</div>
             <div className="stat-label">{stat.label}</div>
