@@ -189,6 +189,22 @@ export default function AddVisitPage() {
             Cancel
           </Link>
         </div>
+                <div style={{ marginTop: "1.5rem" }}>
+          <Link
+            href={`/patients/${patientId}/vitals`}
+            style={{
+              padding: "0.75rem 1.5rem",
+              background: "#1d4ed8",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+              display: "inline-block",
+            }}
+          >
+            Add / View Vitals
+          </Link>
+        </div>
+
       </form>
     </div>
   );
