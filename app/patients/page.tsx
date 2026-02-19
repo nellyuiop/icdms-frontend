@@ -38,7 +38,30 @@ export default function PatientsPage() {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Patients</h1>
+     <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "1.5rem",
+  }}
+>
+  <h1 style={{ fontSize: "2rem" }}>Patients</h1>
+
+  <Link
+    href="/patients/new"
+    style={{
+      padding: "0.6rem 1.2rem",
+      background: "#2563eb",
+      color: "white",
+      textDecoration: "none",
+      borderRadius: "4px",
+      fontWeight: "500",
+    }}
+  >
+    + Add Patient
+  </Link>
+</div>
 
       <input
         type="text"
