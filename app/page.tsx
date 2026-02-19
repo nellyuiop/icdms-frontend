@@ -6,7 +6,6 @@ export default function Home() {
   const stats = [
     { label: "Total Patients", value: "1,247", icon: Users, change: "+12%" },
     { label: "Today's Visits", value: "28", icon: Calendar, change: "+4" },
-    { label: "Pending Labs", value: "16", icon: Microscope, change: "-3" },
   ];
 
   const recentPatients = [
@@ -38,7 +37,6 @@ export default function Home() {
         <p style={{ fontSize: "1.2rem", opacity: 0.9 }}>
           Intelligent Clinical Data Management System
         </p>
-        
       </div>
 
       {/* Stats Grid */}
@@ -46,7 +44,7 @@ export default function Home() {
         {stats.map((stat, index) => (
           <div key={index} className="stat-card">
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-              <stat.icon size={32} color="#0b2b4a"/>
+              <stat.icon size={32} color="#0b2b4a" />
             </div>
             <div className="stat-value">{stat.value}</div>
             <div className="stat-label">{stat.label}</div>
@@ -132,10 +130,7 @@ export default function Home() {
           gap: "1rem",
           marginTop: "2rem",
         }}
-      >
-        
-        
-      </div>
+      ></div>
     </div>
   );
 }
