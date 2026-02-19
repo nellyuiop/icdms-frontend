@@ -25,10 +25,48 @@ const mockPatients = [
     lastVisit: "2026-02-12",
     provider: "Dr. Chen",
   },
+   {
+    id: "P-1004",
+    name: "Emma Brown",
+    dob: "1989-09-30",
+    phone: "(555) 456-8901",
+    email: "emma.brown@email.com",
+    address: "321 Pine St",
+    lastVisit: "2026-02-15",
+    provider: "Dr. Williams",
+  },
+   {
+    id: "P-1003",
+    name: "Ali Hassan",
+    dob: "1992-03-08",
+    phone: "(555) 345-7890",
+    email: "ali.hassan@email.com",
+    address: "789 Cedar Rd",
+    lastVisit: "2026-02-14",
+    provider: "Dr. Patel",
+  },
+{
+  id: "P-1006",
+  name: "Sophia Martinez",
+  dob: "1995-05-22",
+  phone: "(555) 678-0123",
+  email: "sophia.martinez@email.com",
+  address: "987 Maple Ave, Seattle, USA",
+  lastVisit: "2026-02-20",
+  provider: "Dr. Patel",
+  
+  
+},
 ];
 
 export default function PatientsPage() {
   const [search, setSearch] = useState("");
+const [open, setOpen] = useState(false);
+
+const [name, setName] = useState("");
+const [dob, setDob] = useState("");
+const [phone, setPhone] = useState("");
+const [email, setEmail] = useState("");
 
   const filteredPatients = mockPatients.filter(
     (p) =>
