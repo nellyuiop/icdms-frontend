@@ -15,8 +15,7 @@ const mockPatients = [
     address: "123 Main St, Anytown, USA",
     lastVisit: "2026-02-10",
     provider: "Dr. Williams",
-    bloodType: "O+",
-    allergies: ["Penicillin"],
+    
   },
   {
     id: "P-1002",
@@ -27,9 +26,30 @@ const mockPatients = [
     address: "456 Oak Ave, Somewhere, USA",
     lastVisit: "2026-02-12",
     provider: "Dr. Chen",
-    bloodType: "A-",
-    allergies: ["Sulfa"],
+   
   },
+  {
+  id: "P-1003",
+  name: "Ali Hassan",
+  dob: "1992-03-08",
+  phone: "(555) 345-7890",
+  email: "ali.hassan@email.com",
+  address: "789 Cedar Rd, Dallas, USA",
+  lastVisit: "2026-02-14",
+  provider: "Dr. Patel",
+  
+},
+{
+  id: "P-1004",
+  name: "Emma Brown",
+  dob: "1989-09-30",
+  phone: "(555) 456-8901",
+  email: "emma.brown@email.com",
+  address: "321 Pine St, Chicago, USA",
+  lastVisit: "2026-02-15",
+  provider: "Dr. Williams",
+  
+},
 ];
 
 export default function PatientProfilePage() {
