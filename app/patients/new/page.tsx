@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function NewPatientPage() {
   const router = useRouter();
@@ -33,6 +34,20 @@ export default function NewPatientPage() {
 
   return (
     <div style={{ padding: "2rem", maxWidth: "600px" }}>
+       <Link
+      href="/patients"
+      style={{
+        display: "inline-block",
+        marginBottom: "1rem",
+        color: "#2563eb",
+        textDecoration: "none",
+        fontWeight: "500",
+      }}
+    >
+      ← Back to Patients
+    </Link>
+
+      
       <h1 style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>
         Add New Patient
       </h1>
