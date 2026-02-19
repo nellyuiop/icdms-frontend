@@ -50,6 +50,17 @@ const mockPatients = [
   provider: "Dr. Williams",
   
 },
+{
+  id: "P-1006",
+  name: "Sophia Martinez",
+  dob: "1995-05-22",
+  phone: "(555) 678-0123",
+  email: "sophia.martinez@email.com",
+  address: "987 Maple Ave, Seattle, USA",
+  lastVisit: "2026-02-20",
+  provider: "Dr. Patel",
+  
+},
 ];
 
 export default function PatientProfilePage() {
