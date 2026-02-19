@@ -134,17 +134,7 @@ export default function Home() {
         }}
       >
         
-        <div className="card" style={{ textAlign: "center" }}>
-          <h3 style={{ color: "var(--primary)", marginBottom: "1rem" }}>
-            Lab Results
-          </h3>
-          <p style={{ color: "var(--gray)", marginBottom: "1rem" }}>
-            View pending lab reports
-          </p>
-          <Link href="/patients" className="btn btn-secondary">
-            View Labs
-          </Link>
-        </div>
+        
       </div>
     </div>
   );
