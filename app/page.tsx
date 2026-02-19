@@ -40,25 +40,142 @@ export default function Home() {
       </div>
 
       {/* Stats Grid */}
-      <div className="stats-grid">
-        {stats.map((stat, index) => (
-          <div key={index} className="stat-card">
-            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-              <stat.icon size={32} color="#0b2b4a" />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "1.5rem",
+          marginBottom: "2rem",
+        }}
+      >
+        {/* Total Patients Card */}
+        <div
+          style={{
+            background: "white",
+            padding: "1.5rem",
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#0b2b4a"
+            strokeWidth="1.5"
+            style={{ marginBottom: "1rem" }}
+          >
+            <path d="M12 4.5a4 4 0 1 1 0 8 4 4 0 0 1 0-8z" />
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          </svg>
+          <div
+            style={{ fontSize: "2rem", fontWeight: "600", color: "#0b2b4a" }}
+          >
+            1,247
+          </div>
+          <div
+            style={{
+              color: "#6b7280",
+              fontSize: "0.85rem",
+              letterSpacing: "0.5px",
+              marginBottom: "0.5rem",
+            }}
+          >
+            TOTAL PATIENTS
+          </div>
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: "#059669",
+              background: "#ecfdf5",
+              padding: "0.25rem 0.75rem",
+              borderRadius: "20px",
+              display: "inline-block",
+            }}
+          ></div>
+        </div>
+
+        {/* Today's Visits Card */}
+        <div
+          style={{
+            background: "white",
+            padding: "1.5rem",
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#0b2b4a"
+            strokeWidth="1.5"
+            style={{ marginBottom: "1rem" }}
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <div
+            style={{ fontSize: "2rem", fontWeight: "600", color: "#0b2b4a" }}
+          >
+            28
+          </div>
+          <div
+            style={{
+              color: "#6b7280",
+              fontSize: "0.85rem",
+              letterSpacing: "0.5px",
+              marginBottom: "1rem",
+            }}
+          >
+            TODAY'S VISITS
+          </div>
+
+          {/* Status row - clean, no +4 */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              borderTop: "1px solid #e5e7eb",
+              paddingTop: "1rem",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  color: "#059669",
+                }}
+              >
+                24
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                Completed
+              </div>
             </div>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-label">{stat.label}</div>
-            <div
-              style={{
-                fontSize: "0.8rem",
-                color: stat.change.startsWith("+") ? "#10b981" : "#ef4444",
-                marginTop: "0.5rem",
-              }}
-            >
-              {stat.change} from last month
+            <div>
+              <div
+                style={{
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                  color: "#d97706",
+                }}
+              >
+                4
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                Scheduled
+              </div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Recent Patients */}
