@@ -55,29 +55,6 @@ export default function AdminDashboard() {
     },
   ];
 
-  // System stats
-  const systemStats = [
-    { label: "Total Users", value: "22", icon: "👥", change: "+2 this month" },
-    {
-      label: "Total Patients",
-      value: "1,247",
-      icon: "🏥",
-      change: "+48 this month",
-    },
-    {
-      label: "Today's Visits",
-      value: "28",
-      icon: "📅",
-      change: "12 completed",
-    },
-    {
-      label: "Storage Used",
-      value: "64%",
-      icon: "💾",
-      change: "2.4 GB / 3.7 GB",
-    },
-  ];
-
   return (
     <div className="container" style={{ padding: "2rem 0" }}>
       {/* Header */}
@@ -94,50 +71,6 @@ export default function AdminDashboard() {
           Admin Dashboard
         </h1>
         <p style={{ opacity: 0.9 }}>{date} · System Oversight & Management</p>
-      </div>
-
-      {/* System Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "1.5rem",
-          marginBottom: "2rem",
-        }}
-      >
-        {systemStats.map((stat, index) => (
-          <div
-            key={index}
-            style={{
-              background: "white",
-              padding: "1.5rem",
-              borderRadius: "12px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-              {stat.icon}
-            </div>
-            <div
-              style={{ fontSize: "2rem", fontWeight: "600", color: "#0b2b4a" }}
-            >
-              {stat.value}
-            </div>
-            <div
-              style={{
-                color: "#6b7280",
-                fontSize: "0.9rem",
-                marginBottom: "0.25rem",
-              }}
-            >
-              {stat.label}
-            </div>
-            <div style={{ fontSize: "0.8rem", color: "#059669" }}>
-              {stat.change}
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Main Content Grid */}
@@ -468,7 +401,7 @@ export default function AdminDashboard() {
                 border: "1px solid #e5e7eb",
               }}
             >
-              ➕ Create User
+              Create User
             </Link>
             <Link
               href="/admin/roles"
@@ -482,7 +415,7 @@ export default function AdminDashboard() {
                 border: "1px solid #e5e7eb",
               }}
             >
-              👥 Manage Roles
+              Manage Roles
             </Link>
             <Link
               href="/admin/audit-logs"
@@ -496,7 +429,7 @@ export default function AdminDashboard() {
                 border: "1px solid #e5e7eb",
               }}
             >
-              📋 View Audit Logs
+              View Audit Logs
             </Link>
             <Link
               href="/admin/settings"
@@ -510,7 +443,7 @@ export default function AdminDashboard() {
                 border: "1px solid #e5e7eb",
               }}
             >
-              ⚙️ System Settings
+              System Settings
             </Link>
           </div>
         </div>
