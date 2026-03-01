@@ -6,113 +6,84 @@ import { usePathname } from "next/navigation";
 export default function Navbar() {
   const pathname = usePathname();
 
-  const role =
-    pathname.startsWith("/admin")
-      ? "admin"
-      : pathname.startsWith("/doctor")
-      ? "doctor"
-      : pathname.startsWith("/staff")
-      ? "staff"
-      : null;
-
   return (
     <nav
       style={{
-        backgroundColor: "#0F2A4F",
-        color: "white",
+        background: "#0b2b4a",
         padding: "1rem 2rem",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+        marginBottom: "2rem",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column" }}>
-  <h2 style={{ margin: 0 }}>ClinIQ</h2>
+      <div
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Link
+          href="/"
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            color: "white",
+            textDecoration: "none",
+          }}
+        >
+          ClinIQ
+        </Link>
 
-  {role && (
-    <span
-      style={{
-        fontSize: "12px",
-        opacity: 0.8,
-        marginTop: "2px",
-        letterSpacing: "1px",
-      }}
-    >
-      {role.toUpperCase()} PANEL
-    </span>
-  )}
-</div>
-
-      <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
-        {role === "staff" && (
-          <>
-            <Link href="/staff" style={linkStyle}>
-  Dashboard
-</Link>
-       <Link href="/staff/patients" style={linkStyle}>
-  Patients
-</Link>
-            
-                   <Link href="/staff/appointments" style={linkStyle}>
-  Appointments
-</Link>
-          </>
-        )}
-
-       {role === "doctor" && (
-  <>
-    <Link href="/doctor" style={linkStyle}>
-      Dashboard
-    </Link>
-
-    <Link href="/doctor/patients" style={linkStyle}>
-      Patients
-    </Link>
-
-    <Link href="/doctor/appointments" style={linkStyle}>
-      Appointments
-    </Link>
-  </>
-)}
-
-       {role === "admin" && (
-  <>
-    <Link href="/admin" style={linkStyle}>
-      Dashboard
-    </Link>
-
-    <Link href="/admin/users" style={linkStyle}>
-      Users
-    </Link>
-
-    <Link href="/admin/roles" style={linkStyle}>
-      Roles
-    </Link>
-  </>
-)}
-
-        {role && (
-          <button
+        <div style={{ display: "flex", gap: "2rem" }}>
+          <Link
+            href="/"
             style={{
-              backgroundColor: "#E53935",
-              color: "white",
-              border: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
+              color: pathname === "/" ? "white" : "#a0c8e8",
+              textDecoration: "none",
             }}
           >
-            Logout
-          </button>
-        )}
+            Dashboard
+          </Link>
+          <Link
+            href="/patients"
+            style={{
+              color: pathname?.startsWith("/patients") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Patients
+          </Link>
+          <Link
+            href="/visits"
+            style={{
+              color: pathname?.startsWith("/visits") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Visits
+          </Link>
+          <Link
+            href="/staff"
+            style={{
+              color: pathname?.startsWith("/staff") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Staff
+          </Link>
+          <Link
+            href="/admin"
+            style={{
+              color: pathname?.startsWith("/admin") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Admin
+          </Link>
+        </div>
       </div>
     </nav>
   );
-  
 }
-const linkStyle = {
-  color: "white",
-  textDecoration: "none",
-  fontWeight: 500,
-  fontSize: "16px",
-};
