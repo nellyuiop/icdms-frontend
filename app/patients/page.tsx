@@ -1,44 +1,76 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-
-// Mock data directly in the file
-const mockPatients = [
-  {
-    id: "P-1001",
-    name: "John Smith",
-    dob: "1985-06-15",
-    phone: "(555) 123-4567",
-    email: "john.smith@email.com",
-    address: "123 Main St",
-    lastVisit: "2026-02-10",
-    provider: "Dr. Williams",
-  },
-  {
-    id: "P-1002",
-    name: "Maria Garcia",
-    dob: "1978-11-23",
-    phone: "(555) 234-5678",
-    email: "maria.garcia@email.com",
-    address: "456 Oak Ave",
-    lastVisit: "2026-02-12",
-    provider: "Dr. Chen",
-  },
-];
+import { patientService, Patient } from "@/services/patients";
 
 export default function PatientsPage() {
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredPatients = mockPatients.filter(
+  useEffect(() => {
+    loadPatients();
+  }, []);
+
+  const loadPatients = async () => {
+    try {
+      setLoading(true);
+      const data = await patientService.getAll();
+      setPatients(data);
+    } catch (err) {
+      setError("Failed to load patients");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPatients = patients.filter(
     (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.id.toLowerCase().includes(search.toLowerCase()),
+      p.name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.id?.toLowerCase().includes(search.toLowerCase()),
   );
+
+  if (loading)
+    return (
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        Loading patients...
+      </div>
+    );
+  if (error)
+    return (
+      <div style={{ padding: "2rem", textAlign: "center", color: "red" }}>
+        {error}
+      </div>
+    );
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>Patients</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <h1 style={{ fontSize: "2rem" }}>Patients</h1>
+        <Link
+          href="/patients/new"
+          style={{
+            padding: "0.6rem 1.2rem",
+            background: "#2563eb",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "4px",
+            fontWeight: "500",
+          }}
+        >
+          + Add Patient
+        </Link>
+      </div>
 
       <input
         type="text"
@@ -72,8 +104,8 @@ export default function PatientsPage() {
               <tr key={p.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: "1rem" }}>{p.id}</td>
                 <td style={{ padding: "1rem" }}>{p.name}</td>
-                <td style={{ padding: "1rem" }}>{p.phone}</td>
-                <td style={{ padding: "1rem" }}>{p.provider}</td>
+                <td style={{ padding: "1rem" }}>{p.phone || "—"}</td>
+                <td style={{ padding: "1rem" }}>{p.provider || "—"}</td>
                 <td style={{ padding: "1rem" }}>
                   <Link
                     href={`/patients/${p.id}`}
