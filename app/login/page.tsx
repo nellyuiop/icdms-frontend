@@ -28,7 +28,7 @@ export default function LoginPage() {
     }
 
     if (user.role === "doctor") {
-      router.push("/doctor");
+      router.push("/dashboard/doctor");
     }
 
     if (user.role === "staff") {
