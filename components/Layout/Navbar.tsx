@@ -42,7 +42,6 @@ export default function Navbar() {
             style={{
               color: pathname === "/" ? "white" : "#a0c8e8",
               textDecoration: "none",
-              fontWeight: pathname === "/" ? "600" : "400",
             }}
           >
             Dashboard
@@ -52,25 +51,37 @@ export default function Navbar() {
             style={{
               color: pathname?.startsWith("/patients") ? "white" : "#a0c8e8",
               textDecoration: "none",
-              fontWeight: pathname?.startsWith("/patients") ? "600" : "400",
             }}
           >
             Patients
           </Link>
-           <button
-    onClick={() => alert("Logout clicked (mock)")}
-    style={{
-      background: "#ef4444",
-      color: "white",
-      border: "none",
-      padding: "0.4rem 1rem",
-      borderRadius: "6px",
-      cursor: "pointer",
-      fontWeight: "500",
-    }}
-  >
-    Logout
-  </button>
+          <Link
+            href="/visits"
+            style={{
+              color: pathname?.startsWith("/visits") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Visits
+          </Link>
+          <Link
+            href="/staff"
+            style={{
+              color: pathname?.startsWith("/staff") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Staff
+          </Link>
+          <Link
+            href="/admin"
+            style={{
+              color: pathname?.startsWith("/admin") ? "white" : "#a0c8e8",
+              textDecoration: "none",
+            }}
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </nav>

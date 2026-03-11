@@ -3,8 +3,8 @@ import Navbar from "../components/Layout/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ICDMS - Intelligent Clinical Data Management System",
-  description: "Healthcare patient management system for clinicians",
+  title: "ClinIQ - Intelligent Clinical Data Management System",
+  description: "Healthcare patient management system",
 };
 
 export default function RootLayout({
