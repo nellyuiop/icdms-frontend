@@ -1,89 +1,117 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const authPages = ["/login", "/signup", "/forgot-password"];
+
+  const hideNavbar = authPages.some(
+    (page) => pathname === page || pathname.startsWith(`${page}/`)
+  );
+
+  if (hideNavbar) {
+    return null;
+  }
+
+  const isAdmin =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/patients") ||
+    pathname.startsWith("/visits");
+
+  const isDoctor =
+    pathname.startsWith("/doctor") ||
+    pathname.startsWith("/dashboard/doctor") ||
+    pathname.startsWith("/appointments");
+
+  const isStaff = pathname.startsWith("/staff");
+
+  let panelLabel = "";
+  let links: { href: string; label: string }[] = [];
+
+  if (isAdmin) {
+    panelLabel = "ADMIN PANEL";
+    links = [
+      { href: "/admin", label: "Dashboard" },
+      { href: "/patients", label: "Patients" },
+      { href: "/visits", label: "Visits" },
+    ];
+  } else if (isDoctor) {
+    panelLabel = "DOCTOR PANEL";
+    links = [
+      { href: "/dashboard/doctor", label: "Dashboard" },
+      { href: "/appointments", label: "Visits" },
+    ];
+  } else if (isStaff) {
+    panelLabel = "STAFF PANEL";
+    links = [
+      { href: "/staff", label: "Dashboard" },
+      { href: "/staff/patients", label: "Patients" },
+      { href: "/staff/appointments", label: "Visits" },
+    ];
+  }
 
   return (
     <nav
       style={{
-        background: "#0b2b4a",
+        backgroundColor: "#0F2A4F",
+        color: "white",
         padding: "1rem 2rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-        marginBottom: "2rem",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
       }}
     >
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            color: "white",
-            textDecoration: "none",
-          }}
-        >
-          ClinIQ
-        </Link>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <h2 style={{ margin: 0 }}>ClinIQ</h2>
 
-        <div style={{ display: "flex", gap: "2rem" }}>
-          <Link
-            href="/"
+        {panelLabel && (
+          <span
             style={{
-              color: pathname === "/" ? "white" : "#a0c8e8",
-              textDecoration: "none",
+              fontSize: "12px",
+              opacity: 0.8,
+              marginTop: "2px",
+              letterSpacing: "1px",
             }}
           >
-            Dashboard
+            {panelLabel}
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: "2rem", alignItems: "center" }}>
+        {links.map((link) => (
+          <Link key={link.href} href={link.href} style={linkStyle}>
+            {link.label}
           </Link>
-          <Link
-            href="/patients"
+        ))}
+
+        {panelLabel && (
+          <button
+            onClick={() => router.push("/login")}
             style={{
-              color: pathname?.startsWith("/patients") ? "white" : "#a0c8e8",
-              textDecoration: "none",
+              backgroundColor: "#E53935",
+              color: "white",
+              border: "none",
+              padding: "0.5rem 1rem",
+              borderRadius: "6px",
+              cursor: "pointer",
             }}
           >
-            Patients
-          </Link>
-          <Link
-            href="/visits"
-            style={{
-              color: pathname?.startsWith("/visits") ? "white" : "#a0c8e8",
-              textDecoration: "none",
-            }}
-          >
-            Visits
-          </Link>
-          <Link
-            href="/staff"
-            style={{
-              color: pathname?.startsWith("/staff") ? "white" : "#a0c8e8",
-              textDecoration: "none",
-            }}
-          >
-            Staff
-          </Link>
-          <Link
-            href="/admin"
-            style={{
-              color: pathname?.startsWith("/admin") ? "white" : "#a0c8e8",
-              textDecoration: "none",
-            }}
-          >
-            Admin
-          </Link>
-        </div>
+            Logout
+          </button>
+        )}
       </div>
     </nav>
   );
 }
+
+const linkStyle = {
+  color: "white",
+  textDecoration: "none",
+  fontWeight: 500,
+  fontSize: "16px",
+};
