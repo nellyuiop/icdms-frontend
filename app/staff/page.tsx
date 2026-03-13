@@ -1,4 +1,3 @@
-// app/staff/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -47,7 +46,6 @@ export default function StaffDashboard() {
 
   return (
     <div className="container" style={{ padding: "2rem 0" }}>
-      {/* Header */}
       <div
         style={{
           background:
@@ -65,7 +63,6 @@ export default function StaffDashboard() {
         <p style={{ opacity: 0.9 }}>{date} · Reception Staff</p>
       </div>
 
-      {/* Stats Grid */}
       <div
         style={{
           display: "grid",
@@ -86,7 +83,6 @@ export default function StaffDashboard() {
             gap: "1rem",
           }}
         >
-          {/* Calendar SVG (same style as doctor dashboard) */}
           <svg width="40" height="40" fill="#0b2b4a" viewBox="0 0 24 24">
             <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V9h14v11z" />
           </svg>
@@ -101,14 +97,11 @@ export default function StaffDashboard() {
             >
               {todaysAppointments.length}
             </div>
-            <div style={{ color: "#6b7280" }}>
-              Today's Appointments
-            </div>
+            <div style={{ color: "#6b7280" }}>Today's Appointments</div>
           </div>
         </div>
       </div>
 
-      {/* Today's Schedule */}
       <div
         style={{
           background: "white",
@@ -157,13 +150,9 @@ export default function StaffDashboard() {
             <tbody>
               {todaysAppointments.map((apt) => (
                 <tr key={apt.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>
-                    {apt.time}
-                  </td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{apt.time}</td>
                   <td style={tdStyle}>{apt.patient}</td>
-                  <td style={{ ...tdStyle, color: "#6b7280" }}>
-                    {apt.type}
-                  </td>
+                  <td style={{ ...tdStyle, color: "#6b7280" }}>{apt.type}</td>
                   <td style={tdStyle}>
                     <span
                       style={{
@@ -179,19 +168,34 @@ export default function StaffDashboard() {
                     </span>
                   </td>
                   <td style={tdStyle}>
-                    <button
-                      style={{
-                        padding: "0.35rem 0.8rem",
-                        background: "#0b2b4a",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Check In
-                    </button>
+                    {apt.status === "checked-in" ? (
+                      <span
+                        style={{
+                          padding: "0.35rem 0.8rem",
+                          background: "#d1fae5",
+                          color: "#065f46",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Checked In
+                      </span>
+                    ) : (
+                      <button
+                        style={{
+                          padding: "0.35rem 0.8rem",
+                          background: "#0b2b4a",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Check In
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -200,7 +204,6 @@ export default function StaffDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div
         style={{
           display: "grid",
@@ -208,17 +211,11 @@ export default function StaffDashboard() {
           gap: "1rem",
         }}
       >
-        <Link
-          href="/staff/patients/new"
-          style={actionCardStyle}
-        >
+        <Link href="/staff/patients/new" style={actionCardStyle}>
           Register New Patient
         </Link>
 
-        <Link
-          href="/staff/appointments/new"
-          style={actionCardStyle}
-        >
+        <Link href="/staff/appointments/new" style={actionCardStyle}>
           Schedule Appointment
         </Link>
       </div>
