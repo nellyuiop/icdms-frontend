@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { users } from "../lib/users";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -10,31 +9,55 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+async function handleLogin(e: React.FormEvent) {
+  e.preventDefault();
 
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  try {
+    const res = await fetch("https://api.cliniq.cloud/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
 
-    const user = users.find(
-      (u) => u.email === email && u.password === password
-    );
+   
+const data = await res.json();
 
-    if (!user) {
-      alert("Invalid email or password");
-      return;
-    }
+if (!res.ok) {
+  alert("Invalid email or password");
+  return;
+}
 
-    if (user.role === "admin") {
+localStorage.setItem("user", JSON.stringify(data.user));
+localStorage.setItem("token", data.accessToken);
+console.log("TOKEN SAVED:", data.accessToken);
+
+
+const role = data.user.role;
+   
+
+    if (role === "ADMIN") {
       router.push("/admin");
     }
 
-    if (user.role === "doctor") {
+    if (role === "CLINICIAN") {
       router.push("/dashboard/doctor");
     }
 
-    if (user.role === "staff") {
+    if (role === "STAFF") {
       router.push("/staff");
     }
+
+  } catch (err) {
+    console.error(err);
+    alert("Login failed");
   }
+}
+  
 
   return (
     <div style={{ padding: "2rem 0" }}>
@@ -63,7 +86,13 @@ export default function LoginPage() {
           border: "1px solid #e5e7eb",
         }}
       >
-        <h2 style={{ marginBottom: "1.5rem", textAlign: "center", color: "#0b2b4a" }}>
+        <h2
+          style={{
+            marginBottom: "1.5rem",
+            textAlign: "center",
+            color: "#0b2b4a",
+          }}
+        >
           Sign In
         </h2>
 
@@ -74,6 +103,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={inputStyle}
+            required
           />
 
           <input
@@ -82,6 +112,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={inputStyle}
+            required
           />
 
           <button style={buttonStyle}>Login</button>
