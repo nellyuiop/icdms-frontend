@@ -44,6 +44,7 @@ export default function Navbar() {
     links = [
       { href: "/dashboard/doctor", label: "Dashboard" },
       { href: "/appointments", label: "Visits" },
+       { href: "/doctor/patients", label: "Patients" },
     ];
   } else if (isStaff) {
     panelLabel = "STAFF PANEL";
