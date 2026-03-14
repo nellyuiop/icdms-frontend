@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { logoutSession } from "@/app/lib/auth";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -32,6 +33,11 @@ export default function Navbar() {
   let panelLabel = "";
   let links: { href: string; label: string }[] = [];
 
+  const handleLogout = async () => {
+    await logoutSession();
+    router.push("/login");
+  };
+
   if (isAdmin) {
     panelLabel = "ADMIN PANEL";
     links = [
@@ -44,7 +50,7 @@ export default function Navbar() {
     links = [
       { href: "/dashboard/doctor", label: "Dashboard" },
       { href: "/appointments", label: "Visits" },
-       { href: "/doctor/patients", label: "Patients" },
+      { href: "/dashboard/doctor/patients", label: "Patients" },
     ];
   } else if (isStaff) {
     panelLabel = "STAFF PANEL";
@@ -92,7 +98,7 @@ export default function Navbar() {
 
         {panelLabel && (
           <button
-            onClick={() => router.push("/login")}
+            onClick={handleLogout}
             style={{
               backgroundColor: "#E53935",
               color: "white",
