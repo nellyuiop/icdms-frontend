@@ -5,6 +5,7 @@ export type AuthUser = {
   name: string | null;
   email: string;
   role: "ADMIN" | "CLINICIAN" | "STAFF";
+  must_change_password?: boolean;
 };
 
 type AuthSessionResponse = {
@@ -59,9 +60,7 @@ export const clearAuthState = () => {
 };
 
 export const getRouteForRole = (role?: AuthUser["role"]) => {
-  if (role === "ADMIN") return "/admin";
-  if (role === "CLINICIAN") return "/dashboard/doctor";
-  if (role === "STAFF") return "/staff";
+  if (role) return "/dashboard";
   return "/login";
 };
 
