@@ -1,37 +1,44 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import api from "@/app/lib/api";
+
+type PatientRecord = {
+  id: string;
+  external_id?: string;
+  name?: string;
+  dob: string;
+  gender?: string | null;
+};
 
 export default function DoctorPatientsPage() {
-  const [patients, setPatients] = useState<any[]>([]);
+  const [patients, setPatients] = useState<PatientRecord[]>([]);
   const [search, setSearch] = useState("");
-
   const router = useRouter();
 
   useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const res = await api.get<PatientRecord[]>("/patients");
+        setPatients(res.data || []);
+      } catch (err) {
+        console.error("Error fetching patients:", err);
+      }
+    };
+
     fetchPatients();
   }, []);
 
-  const fetchPatients = async () => {
-    try {
-      const res = await axios.get("https://api.cliniq.cloud/patients", {
-        headers: {
-          "x-api-key": "icdms_2026_ntccgfjck",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+  const filtered = patients.filter((patient) => {
+    const name = patient.name || "";
+    const externalId = patient.external_id || "";
 
-      setPatients(res.data || []);
-    } catch (err) {
-      console.error("Error fetching patients:", err);
-    }
-  };
-
-  const filtered = patients.filter((p: any) =>
-    (p.name || "").toLowerCase().includes(search.toLowerCase()) ||
-    (p.external_id || "").toLowerCase().includes(search.toLowerCase())
-  );
+    return (
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      externalId.toLowerCase().includes(search.toLowerCase())
+    );
+  });
 
   return (
     <div
@@ -91,32 +98,32 @@ export default function DoctorPatientsPage() {
               </td>
             </tr>
           ) : (
-            filtered.map((p: any) => (
+            filtered.map((patient) => (
               <tr
-                key={p.id}
+                key={patient.id}
                 style={{
                   borderTop: "1px solid #eee",
                   cursor: "pointer",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#f9fafb")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "white")
-                }
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#f9fafb";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "white";
+                }}
               >
-                <td style={{ padding: "12px" }}>{p.external_id}</td>
-                <td style={{ padding: "12px" }}>{p.name}</td>
+                <td style={{ padding: "12px" }}>{patient.external_id}</td>
+                <td style={{ padding: "12px" }}>{patient.name}</td>
                 <td style={{ padding: "12px" }}>
-                  {new Date(p.dob).toLocaleDateString()}
+                  {new Date(patient.dob).toLocaleDateString()}
                 </td>
-                <td style={{ padding: "12px" }}>{p.gender}</td>
+                <td style={{ padding: "12px" }}>{patient.gender}</td>
 
                 <td style={{ padding: "12px" }}>
                   <button
-                    onClick={() =>
-                      router.push(`/dashboard/doctor/patients/${p.id}`)
-                    }
+                    onClick={() => {
+                      router.push(`/dashboard/doctor/patients/${patient.id}`);
+                    }}
                     style={{
                       padding: "6px 12px",
                       background: "#2563eb",

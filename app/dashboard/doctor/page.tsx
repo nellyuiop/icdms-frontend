@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/app/lib/api";
+import { getStoredUser } from "@/app/lib/auth";
 
 interface Appointment {
   id: string;
@@ -13,11 +14,28 @@ interface Appointment {
   status: "scheduled" | "in-progress" | "completed";
 }
 
+type EncounterApiRecord = {
+  id: string;
+  patient?: {
+    id?: string;
+    name?: string;
+  };
+  patient_id?: string;
+  visit_date?: string;
+  scheduledAt?: string;
+  status: string;
+};
+
 export default function DoctorDashboard() {
-const [doctorName, setDoctorName] = useState("Doctor");
-const [appointments, setAppointments] = useState<Appointment[]>([]);
-const [hoveredAptId, setHoveredAptId] = useState<string | null>(null);
-const [isStatsHover, setIsStatsHover] = useState(false);
+  const [doctorName] = useState(() => {
+    const user = getStoredUser();
+    if (!user?.name) return "Doctor";
+
+    return user.name.replace(/^Dr\.\s*/i, "");
+  });
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [hoveredAptId, setHoveredAptId] = useState<string | null>(null);
+  const [isStatsHover, setIsStatsHover] = useState(false);
 
   const todayDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -26,52 +44,36 @@ const [isStatsHover, setIsStatsHover] = useState(false);
     day: "numeric",
   });
 
- useEffect(() => {
-  const storedUser = localStorage.getItem("user");
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await api.get<EncounterApiRecord[]>("/encounters?status=SCHEDULED");
+        const data = res.data || [];
 
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
+        const mapped = data.map((enc) => ({
+          id: enc.id,
+          patientName: enc.patient?.name || "Unknown",
+          patientId: enc.patient?.id || enc.patient_id || "",
+          time: new Date(enc.visit_date || enc.scheduledAt || Date.now()).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          reason: "Visit",
+          status: enc.status.toLowerCase() as Appointment["status"],
+        }));
 
-    const cleanName = user.name.replace(/^Dr\.\s*/i, "");
+        setAppointments(mapped);
+      } catch (err) {
+        console.error("Failed to load appointments", err);
+      }
+    };
 
-    setDoctorName(cleanName);
-  }
-}, []);
-useEffect(() => {
-  const fetchAppointments = async () => {
-    try {
-     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    fetchAppointments();
+  }, []);
 
-const res = await api.get("/encounters?status=SCHEDULED");
-      const data = res.data || [];
-
-      const mapped = data.map((enc: any) => ({
-        id: enc.id,
-        patientName: enc.patient?.name || "Unknown",
-        patientId: enc.patientId,
-        time: new Date(enc.scheduledAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        reason: "Visit",
-        status: enc.status.toLowerCase(),
-      }));
-
-      setAppointments(mapped);
-
-    } catch (err) {
-      console.error("Failed to load appointments", err);
-    }
-  };
-
-  fetchAppointments();
-}, []);
-
- 
-   
   const stats = [
     {
-      label: "Today's Appointments",
+      label: "Today appointments",
       value: appointments.length.toString(),
     },
   ];
@@ -108,8 +110,6 @@ const res = await api.get("/encounters?status=SCHEDULED");
 
   return (
     <div className="container" style={{ padding: "2rem 0" }}>
-      
-      {/* Welcome Header */}
       <div
         style={{
           background:
@@ -127,7 +127,6 @@ const res = await api.get("/encounters?status=SCHEDULED");
         <p style={{ opacity: 0.9 }}>{todayDate}</p>
       </div>
 
-      {/* Stats */}
       <div
         style={{
           display: "grid",
@@ -174,7 +173,6 @@ const res = await api.get("/encounters?status=SCHEDULED");
         ))}
       </div>
 
-      {/* Today's Schedule */}
       <div
         style={{
           background: "white",
@@ -192,73 +190,67 @@ const res = await api.get("/encounters?status=SCHEDULED");
             marginBottom: "1rem",
           }}
         >
-          <h2 style={{ fontSize: "1.3rem", color: "#0b2b4a" }}>
-            Today's Schedule
-          </h2>
+          <h2 style={{ fontSize: "1.3rem", color: "#0b2b4a" }}>Today schedule</h2>
 
           <Link href="/appointments" style={{ color: "#0b2b4a" }}>
-            View Full Schedule →
+            View full schedule
           </Link>
         </div>
-{appointments.length === 0 ? (
-  <p>No appointments today</p>
-) : (
-  appointments.map((apt) => {
-    const isHover = hoveredAptId === apt.id;
+        {appointments.length === 0 ? (
+          <p>No appointments today</p>
+        ) : (
+          appointments.map((apt) => {
+            const isHover = hoveredAptId === apt.id;
 
-    return (
-      <div
-        key={apt.id}
-        onMouseEnter={() => setHoveredAptId(apt.id)}
-        onMouseLeave={() => setHoveredAptId(null)}
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "1rem",
-          borderBottom: "1px solid #e5e7eb",
-          background: isHover ? "#f9fafb" : "white",
-        }}
-      >
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <div
-            style={{
-              width: "4px",
-              height: "50px",
-              background: statusAccentColor(apt.status),
-            }}
-          />
+            return (
+              <div
+                key={apt.id}
+                onMouseEnter={() => setHoveredAptId(apt.id)}
+                onMouseLeave={() => setHoveredAptId(null)}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "1rem",
+                  borderBottom: "1px solid #e5e7eb",
+                  background: isHover ? "#f9fafb" : "white",
+                }}
+              >
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <div
+                    style={{
+                      width: "4px",
+                      height: "50px",
+                      background: statusAccentColor(apt.status),
+                    }}
+                  />
 
-          <div>
-            <strong>{apt.time}</strong>{" "}
-            <Link href={`/patients/${apt.patientId}`}>
-              {apt.patientName}
-            </Link>
+                  <div>
+                    <strong>{apt.time}</strong>{" "}
+                    <Link href={`/patients/${apt.patientId}`}>{apt.patientName}</Link>
 
-            <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-              {apt.reason}
-            </div>
-          </div>
-        </div>
+                    <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+                      {apt.reason}
+                    </div>
+                  </div>
+                </div>
 
-        <span
-          style={{
-            padding: "0.25rem 0.75rem",
-            borderRadius: "999px",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            ...statusPillStyle(apt.status),
-          }}
-        >
-          {apt.status}
-        </span>
-      </div>
-    );
-  })
-)}
-   
+                <span
+                  style={{
+                    padding: "0.25rem 0.75rem",
+                    borderRadius: "999px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    ...statusPillStyle(apt.status),
+                  }}
+                >
+                  {apt.status}
+                </span>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      {/* Recent Patients */}
       <div
         style={{
           background: "white",
@@ -267,9 +259,7 @@ const res = await api.get("/encounters?status=SCHEDULED");
           border: "1px solid #e5e7eb",
         }}
       >
-        <h2 style={{ fontSize: "1.3rem", color: "#0b2b4a" }}>
-          Recent Patients
-        </h2>
+        <h2 style={{ fontSize: "1.3rem", color: "#0b2b4a" }}>Recent Patients</h2>
 
         <table style={{ width: "100%", marginTop: "1rem" }}>
           <tbody>
@@ -281,7 +271,6 @@ const res = await api.get("/encounters?status=SCHEDULED");
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }

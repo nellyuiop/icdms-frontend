@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { logoutSession } from "@/app/lib/auth";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -31,6 +32,11 @@ export default function Navbar() {
 
   let panelLabel = "";
   let links: { href: string; label: string }[] = [];
+
+  const handleLogout = async () => {
+    await logoutSession();
+    router.push("/login");
+  };
 
   if (isAdmin) {
     panelLabel = "ADMIN PANEL";
@@ -92,7 +98,7 @@ export default function Navbar() {
 
         {panelLabel && (
           <button
-            onClick={() => router.push("/login")}
+            onClick={handleLogout}
             style={{
               backgroundColor: "#E53935",
               color: "white",

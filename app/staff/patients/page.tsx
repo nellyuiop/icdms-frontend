@@ -3,15 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type Patient = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  dob: string;
-  gender: string;
-};
-
 export default function StaffPatients() {
   const [search, setSearch] = useState("");
  const patients = [

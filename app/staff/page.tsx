@@ -97,7 +97,7 @@ export default function StaffDashboard() {
             >
               {todaysAppointments.length}
             </div>
-            <div style={{ color: "#6b7280" }}>Today's Appointments</div>
+            <div style={{ color: "#6b7280" }}>Today&apos;s Appointments</div>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function StaffDashboard() {
           }}
         >
           <h2 style={{ fontSize: "1.3rem", color: "#0b2b4a" }}>
-            Today's Schedule
+            Today&apos;s Schedule
           </h2>
 
           <Link
