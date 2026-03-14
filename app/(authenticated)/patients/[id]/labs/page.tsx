@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { Plus, Trash2, X } from "lucide-react";
 
 type LabData = {
   testName: string;
@@ -23,11 +24,11 @@ type LabRecord = {
   data_json?: string;
 };
 
-const statusBadge: Record<string, { bg: string; color: string }> = {
-  NORMAL: { bg: "#d1fae5", color: "#065f46" },
-  HIGH: { bg: "#fef3c7", color: "#b45309" },
-  LOW: { bg: "#dbeafe", color: "#1e40af" },
-  CRITICAL: { bg: "#fef2f2", color: "#dc2626" },
+const statusBadgeClass: Record<string, string> = {
+  NORMAL: "badge badge-normal",
+  HIGH: "badge badge-high",
+  LOW: "badge badge-low",
+  CRITICAL: "badge badge-critical",
 };
 
 export default function PatientLabsPage() {
@@ -38,7 +39,6 @@ export default function PatientLabsPage() {
   const [labs, setLabs] = useState<LabRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Add lab form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     testName: "",
@@ -116,104 +116,91 @@ export default function PatientLabsPage() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Lab Results</h2>
+      <div className="page-header">
+        <h2 className="page-title">Lab Results</h2>
         {canUpload && (
           <button
             onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: "8px 16px",
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
+            className={`btn ${showForm ? "btn-ghost" : "btn-primary"}`}
           >
-            {showForm ? "Cancel" : "+ Add Lab Result"}
+            {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add Result</>}
           </button>
         )}
       </div>
 
       {showForm && (
-        <div
-          style={{
-            background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            marginBottom: "1.5rem",
-            maxWidth: "500px",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Add Lab Result</h3>
-          <form onSubmit={handleCreate} style={{ display: "grid", gap: "1rem" }}>
-            <input
-              placeholder="Test Name (e.g. CBC, BMP)"
-              value={form.testName}
-              onChange={(e) => setForm({ ...form, testName: e.target.value })}
-              required
-              style={inputStyle}
-            />
-            <input
-              type="number"
-              step="any"
-              placeholder="Result value"
-              value={form.result}
-              onChange={(e) => setForm({ ...form, result: e.target.value })}
-              required
-              style={inputStyle}
-            />
-            <input
-              placeholder="Unit (e.g. mg/dL)"
-              value={form.unit}
-              onChange={(e) => setForm({ ...form, unit: e.target.value })}
-              style={inputStyle}
-            />
-            <input
-              placeholder="Reference Range (e.g. 70-100)"
-              value={form.referenceRange}
-              onChange={(e) => setForm({ ...form, referenceRange: e.target.value })}
-              style={inputStyle}
-            />
-            <select
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as LabData["status"] })}
-              style={inputStyle}
-            >
-              <option value="NORMAL">Normal</option>
-              <option value="HIGH">High</option>
-              <option value="LOW">Low</option>
-              <option value="CRITICAL">Critical</option>
-            </select>
-            <input
-              placeholder="Notes (optional)"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              style={inputStyle}
-            />
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding: "0.8rem",
-                background: "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: submitting ? "not-allowed" : "pointer",
-                fontWeight: 600,
-                opacity: submitting ? 0.7 : 1,
-              }}
-            >
+        <div className="form-panel" style={{ maxWidth: "500px" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
+            Add Lab Result
+          </h3>
+          <form onSubmit={handleCreate} className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Test Name</label>
+              <input
+                className="form-input"
+                placeholder="e.g. CBC, BMP"
+                value={form.testName}
+                onChange={(e) => setForm({ ...form, testName: e.target.value })}
+                required
+              />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label className="form-label">Result</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  step="any"
+                  placeholder="Value"
+                  value={form.result}
+                  onChange={(e) => setForm({ ...form, result: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Unit</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. mg/dL"
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                />
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label className="form-label">Reference Range</label>
+                <input
+                  className="form-input"
+                  placeholder="e.g. 70-100"
+                  value={form.referenceRange}
+                  onChange={(e) => setForm({ ...form, referenceRange: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select
+                  className="form-input"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as LabData["status"] })}
+                >
+                  <option value="NORMAL">Normal</option>
+                  <option value="HIGH">High</option>
+                  <option value="LOW">Low</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Notes (optional)</label>
+              <input
+                className="form-input"
+                placeholder="Notes"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
+            </div>
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
               {submitting ? "Adding..." : "Add Lab Result"}
             </button>
           </form>
@@ -221,91 +208,58 @@ export default function PatientLabsPage() {
       )}
 
       {loading ? (
-        <p style={{ color: "#777" }}>Loading...</p>
+        <p className="loading-text">Loading...</p>
       ) : labs.length === 0 ? (
-        <p style={{ color: "#777" }}>No lab results found</p>
+        <p className="empty-state">No lab results found</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-            borderRadius: "8px",
-            overflow: "hidden",
-          }}
-        >
-          <thead style={{ background: "#f4f6f8" }}>
-            <tr>
-              <th style={{ padding: "12px", textAlign: "left" }}>Test</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Value</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Status</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Date</th>
-              <th style={{ padding: "12px" }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {labs.map((lab) => {
-              const data = getLabData(lab);
-              const labStatus = data?.status || "NORMAL";
-              const badge = statusBadge[labStatus] || statusBadge.NORMAL;
-              return (
-                <tr key={lab.id} style={{ borderTop: "1px solid #eee" }}>
-                  <td style={{ padding: "12px" }}>{data?.testName || "—"}</td>
-                  <td style={{ padding: "12px" }}>
-                    {data?.result ?? "—"} {data?.unit || ""}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {data?.status && (
-                      <span
-                        style={{
-                          padding: "2px 10px",
-                          borderRadius: "999px",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          background: badge.bg,
-                          color: badge.color,
-                        }}
-                      >
-                        {data.status}
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {(lab.report_date || lab.created_at)
-                      ? new Date(lab.report_date || lab.created_at!).toLocaleDateString()
-                      : "—"}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {canDelete && (
-                      <button
-                        onClick={() => handleDelete(lab.id)}
-                        style={{
-                          padding: "4px 10px",
-                          background: "#dc2626",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontSize: "0.85rem",
-                        }}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Test</th>
+                <th>Value</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th style={{ width: "1%" }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {labs.map((lab) => {
+                const data = getLabData(lab);
+                const labStatus = data?.status || "NORMAL";
+                return (
+                  <tr key={lab.id}>
+                    <td style={{ fontWeight: 500 }}>{data?.testName || "---"}</td>
+                    <td>
+                      {data?.result ?? "---"}{" "}
+                      <span style={{ color: "var(--gray-400)" }}>{data?.unit || ""}</span>
+                    </td>
+                    <td>
+                      {data?.status && (
+                        <span className={statusBadgeClass[labStatus] || "badge"}>
+                          {data.status}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {(lab.report_date || lab.created_at)
+                        ? new Date(lab.report_date || lab.created_at!).toLocaleDateString()
+                        : "---"}
+                    </td>
+                    <td>
+                      {canDelete && (
+                        <button onClick={() => handleDelete(lab.id)} className="btn btn-sm btn-danger">
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.6rem",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};

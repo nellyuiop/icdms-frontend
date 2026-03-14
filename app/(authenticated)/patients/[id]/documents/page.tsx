@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { Plus, Trash2, ExternalLink, X } from "lucide-react";
 
 type PatientDocument = {
   id: string;
@@ -21,7 +22,6 @@ export default function PatientDocumentsPage() {
   const [documents, setDocuments] = useState<PatientDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Add document form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ type: "OTHER", fileName: "", fileUrl: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -76,98 +76,57 @@ export default function PatientDocumentsPage() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Documents</h2>
+      <div className="page-header">
+        <h2 className="page-title">Documents</h2>
         {canManage && (
           <button
             onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: "8px 16px",
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
+            className={`btn ${showForm ? "btn-ghost" : "btn-primary"}`}
           >
-            {showForm ? "Cancel" : "+ Add Document"}
+            {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add Document</>}
           </button>
         )}
       </div>
 
       {showForm && (
-        <div
-          style={{
-            background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            marginBottom: "1.5rem",
-            maxWidth: "500px",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Add Document</h3>
-          <form onSubmit={handleCreate} style={{ display: "grid", gap: "1rem" }}>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                Type
-              </label>
+        <div className="form-panel" style={{ maxWidth: "500px" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
+            Add Document
+          </h3>
+          <form onSubmit={handleCreate} className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Type</label>
               <select
+                className="form-input"
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
-                style={inputStyle}
               >
                 <option value="ID">ID</option>
                 <option value="INSURANCE">Insurance</option>
                 <option value="OTHER">Other</option>
               </select>
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                File Name
-              </label>
+            <div className="form-group">
+              <label className="form-label">File Name</label>
               <input
+                className="form-input"
                 value={form.fileName}
                 onChange={(e) => setForm({ ...form, fileName: e.target.value })}
                 placeholder="e.g. insurance_card.pdf"
                 required
-                style={inputStyle}
               />
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                File URL
-              </label>
+            <div className="form-group">
+              <label className="form-label">File URL</label>
               <input
+                className="form-input"
                 value={form.fileUrl}
                 onChange={(e) => setForm({ ...form, fileUrl: e.target.value })}
                 placeholder="https://..."
                 required
-                style={inputStyle}
               />
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding: "0.8rem",
-                background: "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: submitting ? "not-allowed" : "pointer",
-                fontWeight: 600,
-                opacity: submitting ? 0.7 : 1,
-              }}
-            >
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
               {submitting ? "Adding..." : "Add Document"}
             </button>
           </form>
@@ -175,73 +134,56 @@ export default function PatientDocumentsPage() {
       )}
 
       {loading ? (
-        <p style={{ color: "#777" }}>Loading...</p>
+        <p className="loading-text">Loading...</p>
       ) : documents.length === 0 ? (
-        <p style={{ color: "#777" }}>No documents found</p>
+        <p className="empty-state">No documents found</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-            borderRadius: "8px",
-            overflow: "hidden",
-          }}
-        >
-          <thead style={{ background: "#f4f6f8" }}>
-            <tr>
-              <th style={{ padding: "12px", textAlign: "left" }}>Name</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Type</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Date</th>
-              <th style={{ padding: "12px" }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((doc) => (
-              <tr key={doc.id} style={{ borderTop: "1px solid #eee" }}>
-                <td style={{ padding: "12px" }}>
-                  {doc.fileUrl ? (
-                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>
-                      {doc.fileName}
-                    </a>
-                  ) : (
-                    doc.fileName
-                  )}
-                </td>
-                <td style={{ padding: "12px" }}>{doc.type || "—"}</td>
-                <td style={{ padding: "12px" }}>
-                  {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : "—"}
-                </td>
-                <td style={{ padding: "12px" }}>
-                  {canManage && (
-                    <button
-                      onClick={() => handleDelete(doc.id)}
-                      style={{
-                        padding: "4px 10px",
-                        background: "#dc2626",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontSize: "0.85rem",
-                      }}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th style={{ width: "1%" }}></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {documents.map((doc) => (
+                <tr key={doc.id}>
+                  <td>
+                    {doc.fileUrl ? (
+                      <a
+                        href={doc.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: "var(--accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                      >
+                        {doc.fileName} <ExternalLink size={12} />
+                      </a>
+                    ) : (
+                      doc.fileName
+                    )}
+                  </td>
+                  <td>
+                    <span className="badge" style={{ background: "var(--gray-100)", color: "var(--gray-600)" }}>
+                      {doc.type || "---"}
+                    </span>
+                  </td>
+                  <td>{doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : "---"}</td>
+                  <td>
+                    {canManage && (
+                      <button onClick={() => handleDelete(doc.id)} className="btn btn-sm btn-danger">
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.6rem",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};

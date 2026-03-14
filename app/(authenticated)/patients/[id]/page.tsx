@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  FileText,
+  FlaskConical,
+  Activity,
+  Save,
+  X,
+} from "lucide-react";
 
 type Patient = {
   id: string;
@@ -19,6 +29,7 @@ export default function PatientDetailPage() {
   const { isAdmin, isClinician } = useAuth();
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const id = params.id as string;
 
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -81,253 +92,154 @@ export default function PatientDetailPage() {
     }
   };
 
-  if (loading) return <p style={{ padding: "2rem" }}>Loading...</p>;
-  if (error) return <p style={{ padding: "2rem", color: "#dc2626" }}>{error}</p>;
+  if (loading) return <p className="loading-text">Loading...</p>;
+  if (error) return <div className="alert alert-error">{error}</div>;
   if (!patient) return null;
 
   const tabs = [
-    { label: "Documents", href: `/patients/${id}/documents` },
-    { label: "Labs", href: `/patients/${id}/labs` },
-    { label: "Visits", href: `/patients/${id}/visits` },
+    { label: "Documents", href: `/patients/${id}/documents`, icon: FileText },
+    { label: "Labs", href: `/patients/${id}/labs`, icon: FlaskConical },
+    { label: "Visits", href: `/patients/${id}/visits`, icon: Activity },
   ];
 
   return (
     <div>
-      <button
-        onClick={() => router.push("/patients")}
-        style={{
-          background: "none",
-          border: "none",
-          color: "#2563eb",
-          cursor: "pointer",
-          marginBottom: "1rem",
-          fontSize: "0.9rem",
-        }}
-      >
-        ← Back to Patients
+      <button onClick={() => router.push("/patients")} className="btn btn-ghost" style={{ marginBottom: "1rem" }}>
+        <ArrowLeft size={14} /> Back to Patients
       </button>
 
-      <div
-        style={{
-          background: "white",
-          borderRadius: "12px",
-          padding: "2rem",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          border: "1px solid #e5e7eb",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <h2 style={{ margin: 0, color: "#0b2b4a" }}>
-            {patient.name || "Unknown Patient"}
-          </h2>
-          <div style={{ display: "flex", gap: "8px" }}>
+      <div className="card" style={{ marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem" }}>
+          <h2 className="page-title">{patient.name || "Unknown Patient"}</h2>
+          <div style={{ display: "flex", gap: "6px" }}>
             {canEdit && !editing && (
-              <button
-                onClick={() => setEditing(true)}
-                style={{
-                  padding: "6px 14px",
-                  background: "#2563eb",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                Edit
+              <button onClick={() => setEditing(true)} className="btn btn-sm btn-primary">
+                <Pencil size={13} /> Edit
               </button>
             )}
             {canDelete && (
-              <button
-                onClick={() => setDeleteConfirm(true)}
-                style={{
-                  padding: "6px 14px",
-                  background: "#dc2626",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                Delete
+              <button onClick={() => setDeleteConfirm(true)} className="btn btn-sm btn-danger">
+                <Trash2 size={13} /> Delete
               </button>
             )}
           </div>
         </div>
 
         {editing ? (
-          <div style={{ display: "grid", gap: "1rem", maxWidth: "500px" }}>
-            <input
-              value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              placeholder="Name"
-              style={inputStyle}
-            />
-            <input
-              type="date"
-              value={editForm.dob}
-              onChange={(e) => setEditForm({ ...editForm, dob: e.target.value })}
-              style={inputStyle}
-            />
-            <select
-              value={editForm.gender}
-              onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-              style={inputStyle}
-            >
-              <option value="">Select gender</option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
-            </select>
-            <textarea
-              value={editForm.notes}
-              onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-              placeholder="Notes"
-              rows={3}
-              style={{ ...inputStyle, resize: "vertical" }}
-            />
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                style={{
-                  padding: "8px 16px",
-                  background: "#2563eb",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                {saving ? "Saving..." : "Save"}
+          <div className="form-grid" style={{ maxWidth: "480px" }}>
+            <div className="form-group">
+              <label className="form-label">Name</label>
+              <input
+                className="form-input"
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label className="form-label">Date of Birth</label>
+                <input
+                  className="form-input"
+                  type="date"
+                  value={editForm.dob}
+                  onChange={(e) => setEditForm({ ...editForm, dob: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Gender</label>
+                <select
+                  className="form-input"
+                  value={editForm.gender}
+                  onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                >
+                  <option value="">Select</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Notes</label>
+              <textarea
+                className="form-input"
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                rows={3}
+                style={{ resize: "vertical" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button onClick={handleSave} disabled={saving} className="btn btn-primary">
+                <Save size={14} /> {saving ? "Saving..." : "Save"}
               </button>
-              <button
-                onClick={() => setEditing(false)}
-                style={{
-                  padding: "8px 16px",
-                  background: "#e5e7eb",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
+              <button onClick={() => setEditing(false)} className="btn btn-ghost">
+                <X size={14} /> Cancel
               </button>
             </div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className="detail-grid">
             <div>
-              <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>Date of Birth</div>
-              <div>{new Date(patient.dob).toLocaleDateString()}</div>
+              <div className="detail-item-label">Date of Birth</div>
+              <div className="detail-item-value">{new Date(patient.dob).toLocaleDateString()}</div>
             </div>
             <div>
-              <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>Gender</div>
-              <div>{patient.gender || "—"}</div>
+              <div className="detail-item-label">Gender</div>
+              <div className="detail-item-value">
+                {patient.gender ? patient.gender.charAt(0) + patient.gender.slice(1).toLowerCase() : "---"}
+              </div>
             </div>
             {patient.external_id && (
               <div>
-                <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>External ID</div>
-                <div>{patient.external_id}</div>
+                <div className="detail-item-label">External ID</div>
+                <div className="detail-item-value" style={{ fontFamily: "monospace", fontSize: "0.82rem" }}>
+                  {patient.external_id}
+                </div>
               </div>
             )}
             {patient.notes && (
               <div style={{ gridColumn: "1 / -1" }}>
-                <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>Notes</div>
-                <div>{patient.notes}</div>
+                <div className="detail-item-label">Notes</div>
+                <div className="detail-item-value">{patient.notes}</div>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Tab links */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
-        {tabs.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            style={{
-              padding: "10px 20px",
-              background: "white",
-              borderRadius: "8px",
-              textDecoration: "none",
-              color: "#0b2b4a",
-              border: "1px solid #e5e7eb",
-              fontWeight: 500,
-            }}
-          >
-            {tab.label}
-          </Link>
-        ))}
+      <div className="tab-nav">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = pathname.startsWith(tab.href);
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`tab-link${active ? " active" : ""}`}
+            >
+              <Icon size={15} />
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-          onClick={() => !deleting && setDeleteConfirm(false)}
-        >
-          <div
-            style={{
-              background: "white",
-              borderRadius: "10px",
-              padding: "30px",
-              maxWidth: "420px",
-              width: "90%",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: "12px" }}>Delete Patient</h3>
-            <p style={{ color: "#555", marginBottom: "24px" }}>
+        <div className="modal-overlay" onClick={() => !deleting && setDeleteConfirm(false)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Delete Patient</h3>
+            <p className="modal-body">
               Are you sure you want to delete{" "}
               <strong>{patient.name || "this patient"}</strong>? This action cannot
               be undone.
             </p>
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-              <button
-                onClick={() => setDeleteConfirm(false)}
-                disabled={deleting}
-                style={{
-                  padding: "8px 16px",
-                  background: "#e5e7eb",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
+            <div className="modal-actions">
+              <button onClick={() => setDeleteConfirm(false)} disabled={deleting} className="btn btn-ghost">
                 Cancel
               </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                style={{
-                  padding: "8px 16px",
-                  background: "#dc2626",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  opacity: deleting ? 0.7 : 1,
-                }}
-              >
-                {deleting ? "Deleting..." : "Delete"}
+              <button onClick={handleDelete} disabled={deleting} className="btn btn-danger">
+                <Trash2 size={14} /> {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -336,10 +248,3 @@ export default function PatientDetailPage() {
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.6rem",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};

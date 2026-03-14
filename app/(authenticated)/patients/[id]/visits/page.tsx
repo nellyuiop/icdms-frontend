@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { Play } from "lucide-react";
 
 type EncounterApiRecord = {
   id: string;
@@ -32,6 +33,16 @@ type VitalDisplay = {
   value: string;
 };
 
+const statusBadgeClass = (status: string) => {
+  const s = status.toLowerCase().replace("_", "-");
+  if (s === "scheduled") return "badge badge-scheduled";
+  if (s === "checked-in") return "badge badge-checked-in";
+  if (s === "in-progress") return "badge badge-in-progress";
+  if (s === "completed") return "badge badge-completed";
+  if (s === "cancelled") return "badge badge-cancelled";
+  return "badge";
+};
+
 export default function PatientVisitsPage() {
   const { isAdmin, isClinician } = useAuth();
   const params = useParams();
@@ -57,7 +68,6 @@ export default function PatientVisitsPage() {
         );
         setVisits(patientVisits);
 
-        // Map the most recent vital record into display rows
         const latest = (vitalsRes.data || [])[0];
         if (latest) {
           const rows: VitalDisplay[] = [];
@@ -68,13 +78,13 @@ export default function PatientVisitsPage() {
             rows.push({ label: "Heart Rate", value: `${latest.heartRate} bpm` });
           }
           if (latest.temperature != null) {
-            rows.push({ label: "Temperature", value: `${latest.temperature} °C` });
+            rows.push({ label: "Temperature", value: `${latest.temperature} C` });
           }
           if (latest.respiratoryRate != null) {
             rows.push({ label: "Respiratory Rate", value: `${latest.respiratoryRate} /min` });
           }
           if (latest.oxygenSaturation != null) {
-            rows.push({ label: "O₂ Saturation", value: `${latest.oxygenSaturation}%` });
+            rows.push({ label: "O2 Saturation", value: `${latest.oxygenSaturation}%` });
           }
           setVitals(rows);
         }
@@ -87,21 +97,6 @@ export default function PatientVisitsPage() {
     fetchData();
   }, [id]);
 
-  const statusPillStyle = (status: string) => {
-    const s = status.toLowerCase();
-    if (s === "scheduled")
-      return { background: "#fef3c7", color: "#b45309" };
-    if (s === "checked_in" || s === "checked-in")
-      return { background: "#e0f2fe", color: "#0369a1" };
-    if (s === "in-progress" || s === "in_progress")
-      return { background: "#dbeafe", color: "#1e40af" };
-    if (s === "completed")
-      return { background: "#d1fae5", color: "#065f46" };
-    if (s === "cancelled")
-      return { background: "#fef2f2", color: "#dc2626" };
-    return { background: "#f3f4f6", color: "#374151" };
-  };
-
   const handleStartVisit = async (visitId: string) => {
     try {
       await api.patch(`/encounters/${visitId}/start`);
@@ -112,42 +107,24 @@ export default function PatientVisitsPage() {
     }
   };
 
-  if (loading) return <p style={{ color: "#777" }}>Loading...</p>;
+  if (loading) return <p className="loading-text">Loading...</p>;
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Visit History</h2>
+      <div className="page-header">
+        <h2 className="page-title">Visit History</h2>
       </div>
 
-      {/* Vitals Summary */}
       {vitals.length > 0 && (
-        <div
-          style={{
-            background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <h3 style={{ margin: "0 0 1rem 0", color: "#0b2b4a", fontSize: "1.1rem" }}>
+        <div className="card">
+          <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--primary)", marginBottom: "0.75rem" }}>
             Latest Vitals
           </h3>
-          <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+          <div className="vitals-grid">
             {vitals.map((v, i) => (
               <div key={i}>
-                <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>{v.label}</div>
-                <div style={{ fontWeight: 600, fontSize: "1.1rem" }}>
-                  {v.value}
-                </div>
+                <div className="vital-item-label">{v.label}</div>
+                <div className="vital-item-value">{v.value}</div>
               </div>
             ))}
           </div>
@@ -155,33 +132,17 @@ export default function PatientVisitsPage() {
       )}
 
       {visits.length === 0 ? (
-        <p style={{ color: "#777" }}>No visits recorded</p>
+        <p className="empty-state">No visits recorded</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {visits.map((visit) => (
-            <div
-              key={visit.id}
-              style={{
-                background: "white",
-                borderRadius: "10px",
-                border: "1px solid #e5e7eb",
-                overflow: "hidden",
-              }}
-            >
+            <div key={visit.id} className="visit-card">
               <div
-                onClick={() =>
-                  setExpandedVisit(expandedVisit === visit.id ? null : visit.id)
-                }
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "1rem 1.5rem",
-                  cursor: "pointer",
-                }}
+                className="visit-card-header"
+                onClick={() => setExpandedVisit(expandedVisit === visit.id ? null : visit.id)}
               >
                 <div>
-                  <div style={{ fontWeight: 500 }}>
+                  <div style={{ fontWeight: 500, fontSize: "0.9rem" }}>
                     {new Date(
                       visit.visit_date || visit.scheduledAt || Date.now()
                     ).toLocaleDateString("en-US", {
@@ -192,59 +153,31 @@ export default function PatientVisitsPage() {
                     })}
                   </div>
                   {visit.clinician?.name && (
-                    <div style={{ color: "#6b7280", fontSize: "0.85rem" }}>
+                    <div style={{ color: "var(--gray-400)", fontSize: "0.8rem" }}>
                       {visit.clinician.name}
                     </div>
                   )}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {canStartVisit &&
-                    visit.status.toUpperCase() === "CHECKED_IN" && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartVisit(visit.id);
-                        }}
-                        style={{
-                          padding: "4px 10px",
-                          background: "#2563eb",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontSize: "0.8rem",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Start
-                      </button>
-                    )}
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "999px",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      ...statusPillStyle(visit.status),
-                    }}
-                  >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {canStartVisit && visit.status.toUpperCase() === "CHECKED_IN" && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartVisit(visit.id);
+                      }}
+                      className="btn btn-sm btn-primary"
+                    >
+                      <Play size={12} /> Start
+                    </button>
+                  )}
+                  <span className={statusBadgeClass(visit.status)}>
                     {visit.status.toLowerCase().replace("_", "-")}
                   </span>
                 </div>
               </div>
 
               {expandedVisit === visit.id && visit.notes && (
-                <div
-                  style={{
-                    padding: "0 1.5rem 1rem",
-                    borderTop: "1px solid #e5e7eb",
-                    paddingTop: "1rem",
-                    color: "#555",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {visit.notes}
-                </div>
+                <div className="visit-card-body">{visit.notes}</div>
               )}
             </div>
           ))}
