@@ -27,22 +27,26 @@ type EncounterApiRecord = {
 };
 
 export default function DoctorDashboard() {
-  const [doctorName] = useState(() => {
-    const user = getStoredUser();
-    if (!user?.name) return "Doctor";
-
-    return user.name.replace(/^Dr\.\s*/i, "");
-  });
+  const [doctorName, setDoctorName] = useState("Doctor");
+  const [todayDate, setTodayDate] = useState("");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [hoveredAptId, setHoveredAptId] = useState<string | null>(null);
   const [isStatsHover, setIsStatsHover] = useState(false);
 
-  const todayDate = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  useEffect(() => {
+    const user = getStoredUser();
+    if (user?.name) {
+      setDoctorName(user.name.replace(/^Dr\.\s*/i, ""));
+    }
+    setTodayDate(
+      new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    );
+  }, []);
 
   useEffect(() => {
     const fetchAppointments = async () => {
