@@ -35,6 +35,7 @@ export default function PatientDetailPage() {
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", dob: "", gender: "", notes: "" });
   const [saving, setSaving] = useState(false);
@@ -71,9 +72,8 @@ export default function PatientDetailPage() {
       const res = await api.patch<Patient>(`/patients/${id}`, editForm);
       setPatient(res.data);
       setEditing(false);
-    } catch (err) {
-      console.error("Error updating patient:", err);
-      alert("Failed to update patient.");
+    } catch {
+      setActionError("Failed to update patient.");
     } finally {
       setSaving(false);
     }
@@ -84,9 +84,8 @@ export default function PatientDetailPage() {
     try {
       await api.delete(`/patients/${id}`);
       router.push("/patients");
-    } catch (err) {
-      console.error("Error deleting patient:", err);
-      alert("Failed to delete patient.");
+    } catch {
+      setActionError("Failed to delete patient.");
     } finally {
       setDeleting(false);
     }
@@ -104,6 +103,8 @@ export default function PatientDetailPage() {
 
   return (
     <div>
+      {actionError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{actionError}</div>}
+
       <button onClick={() => router.push("/patients")} className="btn btn-ghost" style={{ marginBottom: "1rem" }}>
         <ArrowLeft size={14} /> Back to Patients
       </button>

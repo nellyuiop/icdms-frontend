@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
+import ScheduleVisitModal from "@/components/ScheduleVisitModal";
 
 type EncounterApiRecord = {
   id: string;
@@ -33,15 +34,8 @@ export default function AppointmentsPage() {
   const [encounters, setEncounters] = useState<EncounterApiRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("ALL");
-
-  const [showForm, setShowForm] = useState(false);
-  const [schedForm, setSchedForm] = useState({
-    patientId: "",
-    visitDate: "",
-    clinicianUserId: "",
-    reason: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [error, setError] = useState("");
 
   const canSchedule = isAdmin || isStaff;
   const canManage = isAdmin || isClinician;
@@ -66,34 +60,13 @@ export default function AppointmentsPage() {
       ? encounters
       : encounters.filter((e) => e.status.toUpperCase().replace("-", "_") === filter);
 
-  const handleSchedule = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.post("/encounters", {
-        patientId: schedForm.patientId,
-        visitDate: schedForm.visitDate,
-        clinicianUserId: schedForm.clinicianUserId,
-        reason: schedForm.reason || undefined,
-      });
-      setShowForm(false);
-      setSchedForm({ patientId: "", visitDate: "", clinicianUserId: "", reason: "" });
-      fetchEncounters();
-    } catch (err) {
-      console.error("Error scheduling:", err);
-      alert("Failed to schedule appointment.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const updateStatus = async (encounterId: string, status: string) => {
+    setError("");
     try {
       await api.patch(`/encounters/${encounterId}/status`, { status });
       fetchEncounters();
-    } catch (err) {
-      console.error("Error updating status:", err);
-      alert("Failed to update appointment.");
+    } catch {
+      setError("Failed to update appointment.");
     }
   };
 
@@ -111,65 +84,24 @@ export default function AppointmentsPage() {
         <h2 className="page-title">Appointments</h2>
         {canSchedule && (
           <button
-            onClick={() => setShowForm(!showForm)}
-            className={`btn ${showForm ? "btn-ghost" : "btn-primary"}`}
+            onClick={() => setShowScheduleModal(true)}
+            className="btn btn-primary"
           >
-            {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Schedule</>}
+            <Plus size={15} /> Schedule
           </button>
         )}
       </div>
 
-      {showForm && (
-        <div className="form-panel" style={{ maxWidth: "500px" }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
-            Schedule Appointment
-          </h3>
-          <form onSubmit={handleSchedule} className="form-grid">
-            <div className="form-group">
-              <label className="form-label">Patient ID</label>
-              <input
-                className="form-input"
-                value={schedForm.patientId}
-                onChange={(e) => setSchedForm({ ...schedForm, patientId: e.target.value })}
-                placeholder="Enter patient ID"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Visit Date & Time</label>
-              <input
-                className="form-input"
-                type="datetime-local"
-                value={schedForm.visitDate}
-                onChange={(e) => setSchedForm({ ...schedForm, visitDate: e.target.value })}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Clinician User ID</label>
-              <input
-                className="form-input"
-                value={schedForm.clinicianUserId}
-                onChange={(e) => setSchedForm({ ...schedForm, clinicianUserId: e.target.value })}
-                placeholder="Enter clinician user ID"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Reason (optional)</label>
-              <input
-                className="form-input"
-                value={schedForm.reason}
-                onChange={(e) => setSchedForm({ ...schedForm, reason: e.target.value })}
-                placeholder="e.g. Follow-up"
-              />
-            </div>
-            <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
-              {submitting ? "Scheduling..." : "Schedule"}
-            </button>
-          </form>
-        </div>
-      )}
+      <ScheduleVisitModal
+        open={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onSuccess={() => {
+          setShowScheduleModal(false);
+          fetchEncounters();
+        }}
+      />
+
+      {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}
 
       <div className="filter-tabs">
         {tabs.map((tab) => (

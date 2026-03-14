@@ -998,6 +998,106 @@ tbody tr:last-child td {
   font-size: 0.9rem;
 }
 
+/* ─── Patient Picker ─── */
+.patient-picker {
+  position: relative;
+}
+
+.patient-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.patient-picker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+  transition: background var(--transition);
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 0.875rem;
+}
+
+.patient-picker-item:last-child {
+  border-bottom: none;
+}
+
+.patient-picker-item:hover {
+  background: var(--gray-50);
+}
+
+.patient-picker-item-name {
+  font-weight: 500;
+  color: var(--dark);
+}
+
+.patient-picker-item-meta {
+  color: var(--gray-400);
+  font-size: 0.78rem;
+}
+
+.patient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.patient-chip-name {
+  font-weight: 500;
+  color: var(--dark);
+}
+
+.patient-chip-meta {
+  color: var(--gray-400);
+  font-size: 0.78rem;
+}
+
+.patient-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-400);
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition);
+}
+
+.patient-chip-remove:hover {
+  color: var(--danger);
+}
+
+.patient-picker-empty {
+  padding: 0.75rem;
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 0.82rem;
+}
+
+.patient-picker-loading {
+  padding: 0.75rem;
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 0.82rem;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
   .stats-grid {

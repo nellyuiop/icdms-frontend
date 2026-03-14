@@ -97,13 +97,15 @@ export default function PatientVisitsPage() {
     fetchData();
   }, [id]);
 
+  const [actionError, setActionError] = useState("");
+
   const handleStartVisit = async (visitId: string) => {
+    setActionError("");
     try {
       await api.patch(`/encounters/${visitId}/start`);
       window.location.reload();
-    } catch (err) {
-      console.error("Error starting visit:", err);
-      alert("Failed to start visit.");
+    } catch {
+      setActionError("Failed to start visit.");
     }
   };
 
@@ -114,6 +116,8 @@ export default function PatientVisitsPage() {
       <div className="page-header">
         <h2 className="page-title">Visit History</h2>
       </div>
+
+      {actionError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{actionError}</div>}
 
       {vitals.length > 0 && (
         <div className="card">

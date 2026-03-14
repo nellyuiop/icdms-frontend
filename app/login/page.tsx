@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import api from "@/app/lib/api";
-import { getRouteForRole, setAuthSession } from "@/app/lib/auth";
+import { setAuthSession } from "@/app/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
 
+    setError("");
     try {
       const response = await api.post("/auth/login", {
         email,
@@ -24,10 +26,13 @@ export default function LoginPage() {
 
       setAuthSession(data);
 
-      router.push(getRouteForRole(data.user?.role));
-    } catch (err) {
-      console.error(err);
-      alert("Invalid email or password");
+      if (data.user?.must_change_password) {
+        router.push("/change-password");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch {
+      setError("Invalid email or password.");
     }
   }
 
@@ -68,6 +73,21 @@ export default function LoginPage() {
           Sign In
         </h2>
 
+        {error && (
+          <div
+            style={{
+              background: "#fef2f2",
+              color: "#dc2626",
+              padding: "0.75rem",
+              borderRadius: "8px",
+              fontSize: "0.875rem",
+              marginBottom: "1rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -89,18 +109,6 @@ export default function LoginPage() {
 
           <button style={buttonStyle}>Login</button>
         </form>
-
-        <div
-          style={{
-            marginTop: "1rem",
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "14px",
-          }}
-        >
-          <Link href="/forgot-password">Forgot password</Link>
-          <Link href="/signup">Create account</Link>
-        </div>
       </div>
     </div>
   );
