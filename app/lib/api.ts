@@ -1,19 +1,71 @@
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import {
+  API_BASE_URL,
+  API_KEY,
+  clearAuthState,
+  getAccessToken,
+  redirectToLogin,
+  refreshSession,
+} from "@/app/lib/auth";
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+
+type ApiErrorPayload = {
+  message?: string;
+  code?: string;
+};
 
 const api = axios.create({
-  baseURL: "https://api.cliniq.cloud",
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 });
 
+let refreshPromise: Promise<string> | null = null;
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getAccessToken();
+
+  config.headers["x-api-key"] = API_KEY;
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  config.headers["x-api-key"] = "icdms_2026_ntccgfjck";
-
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError<ApiErrorPayload>) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+    const errorCode = error.response?.data?.code;
+    const isExpiredAccessToken =
+      error.response?.status === 401 && errorCode === "AUTH_TOKEN_EXPIRED";
+    const isRefreshCall = originalRequest?.url?.includes("/auth/refresh");
+
+    if (!originalRequest || !isExpiredAccessToken || originalRequest._retry || isRefreshCall) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      refreshPromise ??= refreshSession().finally(() => {
+        refreshPromise = null;
+      });
+
+      const nextAccessToken = await refreshPromise;
+      originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;
+
+      return api(originalRequest);
+    } catch (refreshError) {
+      clearAuthState();
+      redirectToLogin();
+      return Promise.reject(refreshError);
+    }
+  }
+);
 
 export default api;
