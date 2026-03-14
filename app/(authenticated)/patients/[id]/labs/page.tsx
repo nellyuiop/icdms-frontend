@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { Plus, Trash2, X } from "lucide-react";
+import ConfirmModal from "@/components/ConfirmModal";
 
 type LabData = {
   testName: string;
@@ -49,6 +50,11 @@ export default function PatientLabsPage() {
     notes: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const canUpload = isAdmin || isStaff;
   const canDelete = isAdmin;
@@ -71,6 +77,7 @@ export default function PatientLabsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setFormError("");
     try {
       await api.post(`/patients/${id}/labs`, {
         testName: form.testName,
@@ -83,22 +90,26 @@ export default function PatientLabsPage() {
       setShowForm(false);
       setForm({ testName: "", result: "", unit: "", referenceRange: "", status: "NORMAL", notes: "" });
       fetchLabs();
-    } catch (err) {
-      console.error("Error creating lab:", err);
-      alert("Failed to add lab result.");
+    } catch {
+      setFormError("Failed to add lab result.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (labId: string) => {
-    if (!confirm("Delete this lab result?")) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setActionError("");
     try {
-      await api.delete(`/patients/${id}/labs/${labId}`);
+      await api.delete(`/patients/${id}/labs/${deleteTarget}`);
+      setDeleteTarget(null);
       fetchLabs();
-    } catch (err) {
-      console.error("Error deleting lab:", err);
-      alert("Failed to delete lab result.");
+    } catch {
+      setActionError("Failed to delete lab result.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -128,11 +139,14 @@ export default function PatientLabsPage() {
         )}
       </div>
 
+      {actionError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{actionError}</div>}
+
       {showForm && (
         <div className="form-panel" style={{ maxWidth: "500px" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
             Add Lab Result
           </h3>
+          {formError && <div className="alert alert-error">{formError}</div>}
           <form onSubmit={handleCreate} className="form-grid">
             <div className="form-group">
               <label className="form-label">Test Name</label>
@@ -248,7 +262,7 @@ export default function PatientLabsPage() {
                     </td>
                     <td>
                       {canDelete && (
-                        <button onClick={() => handleDelete(lab.id)} className="btn btn-sm btn-danger">
+                        <button onClick={() => setDeleteTarget(lab.id)} className="btn btn-sm btn-danger">
                           <Trash2 size={13} />
                         </button>
                       )}
@@ -260,6 +274,17 @@ export default function PatientLabsPage() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Lab Result"
+        message="Are you sure you want to delete this lab result? This action cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

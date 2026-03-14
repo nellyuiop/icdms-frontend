@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { Search, Plus, Trash2, Eye, X } from "lucide-react";
+import { Search, Plus, Trash2, Eye, X, Calendar } from "lucide-react";
+import ScheduleVisitModal from "@/components/ScheduleVisitModal";
 
 type PatientRecord = {
   id: string;
@@ -40,6 +41,10 @@ export default function PatientsPage() {
 
   const canDelete = isAdmin || isClinician;
   const canAdd = isAdmin || isStaff;
+  const canSchedule = isAdmin || isStaff;
+
+  // Schedule visit modal
+  const [scheduleTarget, setScheduleTarget] = useState<PatientRecord | null>(null);
 
   // Add patient inline form
   const [showForm, setShowForm] = useState(false);
@@ -103,9 +108,8 @@ export default function PatientsPage() {
       await api.delete(`/patients/${deleteTarget.id}`);
       setDeleteTarget(null);
       fetchPatients();
-    } catch (err) {
-      console.error("Error deleting patient:", err);
-      alert("Failed to delete patient. You may not have permission.");
+    } catch {
+      setFormError("Failed to delete patient.");
     } finally {
       setDeleting(false);
     }
@@ -250,6 +254,18 @@ export default function PatientsPage() {
                       >
                         <Eye size={14} /> View
                       </button>
+                      {canSchedule && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setScheduleTarget(patient);
+                          }}
+                          className="btn btn-sm btn-primary"
+                          title="Schedule visit"
+                        >
+                          <Calendar size={14} />
+                        </button>
+                      )}
                       {canDelete && (
                         <button
                           onClick={(e) => {
@@ -297,6 +313,13 @@ export default function PatientsPage() {
           </div>
         </div>
       )}
+
+      <ScheduleVisitModal
+        open={!!scheduleTarget}
+        onClose={() => setScheduleTarget(null)}
+        onSuccess={() => setScheduleTarget(null)}
+        patient={scheduleTarget}
+      />
 
       {deleteTarget && (
         <div className="modal-overlay" onClick={() => !deleting && setDeleteTarget(null)}>

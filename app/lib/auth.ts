@@ -5,6 +5,7 @@ export type AuthUser = {
   name: string | null;
   email: string;
   role: "ADMIN" | "CLINICIAN" | "STAFF";
+  must_change_password?: boolean;
 };
 
 type AuthSessionResponse = {

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { Plus, Trash2, ExternalLink, X } from "lucide-react";
+import ConfirmModal from "@/components/ConfirmModal";
 
 type PatientDocument = {
   id: string;
@@ -25,6 +26,11 @@ export default function PatientDocumentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ type: "OTHER", fileName: "", fileUrl: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const canManage = isAdmin || isStaff;
 
@@ -46,6 +52,7 @@ export default function PatientDocumentsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setFormError("");
     try {
       await api.post(`/patients/${id}/documents`, {
         type: form.type,
@@ -55,22 +62,26 @@ export default function PatientDocumentsPage() {
       setShowForm(false);
       setForm({ type: "OTHER", fileName: "", fileUrl: "" });
       fetchDocuments();
-    } catch (err) {
-      console.error("Error creating document:", err);
-      alert("Failed to add document.");
+    } catch {
+      setFormError("Failed to add document.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDelete = async (docId: string) => {
-    if (!confirm("Delete this document?")) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setActionError("");
     try {
-      await api.delete(`/patients/${id}/documents/${docId}`);
+      await api.delete(`/patients/${id}/documents/${deleteTarget}`);
+      setDeleteTarget(null);
       fetchDocuments();
-    } catch (err) {
-      console.error("Error deleting document:", err);
-      alert("Failed to delete document.");
+    } catch {
+      setActionError("Failed to delete document.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -88,11 +99,14 @@ export default function PatientDocumentsPage() {
         )}
       </div>
 
+      {actionError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{actionError}</div>}
+
       {showForm && (
         <div className="form-panel" style={{ maxWidth: "500px" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
             Add Document
           </h3>
+          {formError && <div className="alert alert-error">{formError}</div>}
           <form onSubmit={handleCreate} className="form-grid">
             <div className="form-group">
               <label className="form-label">Type</label>
@@ -173,7 +187,7 @@ export default function PatientDocumentsPage() {
                   <td>{doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : "---"}</td>
                   <td>
                     {canManage && (
-                      <button onClick={() => handleDelete(doc.id)} className="btn btn-sm btn-danger">
+                      <button onClick={() => setDeleteTarget(doc.id)} className="btn btn-sm btn-danger">
                         <Trash2 size={13} />
                       </button>
                     )}
@@ -184,6 +198,17 @@ export default function PatientDocumentsPage() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Document"
+        message="Are you sure you want to delete this document? This action cannot be undone."
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

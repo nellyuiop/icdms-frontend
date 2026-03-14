@@ -9,7 +9,6 @@ import {
   Users,
   Calendar,
   UserCog,
-  Shield,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -27,7 +26,6 @@ export default function Sidebar() {
 
   const adminLinks = [
     { href: "/admin/users", label: "Users", icon: UserCog, show: isAdmin },
-    { href: "/admin/roles", label: "Roles", icon: Shield, show: isAdmin },
   ];
 
   const isActive = (href: string) => {

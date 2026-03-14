@@ -45,6 +45,11 @@ api.interceptors.response.use(
       error.response?.status === 401 && errorCode === "AUTH_TOKEN_EXPIRED";
     const isRefreshCall = originalRequest?.url?.includes("/auth/refresh");
 
+    if (error.response?.status === 403 && errorCode === "PASSWORD_CHANGE_REQUIRED") {
+      window.location.href = "/change-password";
+      return Promise.reject(error);
+    }
+
     if (!originalRequest || !isExpiredAccessToken || originalRequest._retry || isRefreshCall) {
       return Promise.reject(error);
     }

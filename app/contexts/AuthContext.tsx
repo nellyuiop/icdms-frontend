@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   getStoredUser,
   getAccessToken,
@@ -27,6 +27,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [auth, setAuth] = useState<{ user: AuthUser; token: string } | null>(
     null
   );
@@ -38,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!token || !user) {
       router.replace("/login");
+    } else if (user.must_change_password && pathname !== "/change-password") {
+      router.replace("/change-password");
     } else {
       setAuth({ user, token }); // eslint-disable-line react-hooks/set-state-in-effect -- reading from localStorage (external store) on mount
       setChecked(true);
