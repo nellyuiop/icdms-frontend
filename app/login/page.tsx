@@ -3,61 +3,33 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import api from "@/app/lib/api";
+import { getRouteForRole, setAuthSession } from "@/app/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-async function handleLogin(e: React.FormEvent) {
-  e.preventDefault();
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
 
-  try {
-    const res = await fetch("https://api.cliniq.cloud/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      const response = await api.post("/auth/login", {
         email,
         password,
-      }),
-    });
+      });
 
-   
-const data = await res.json();
+      const data = response.data;
 
-if (!res.ok) {
-  alert("Invalid email or password");
-  return;
-}
+      setAuthSession(data);
 
-localStorage.setItem("user", JSON.stringify(data.user));
-localStorage.setItem("token", data.accessToken);
-console.log("TOKEN SAVED:", data.accessToken);
-
-
-const role = data.user.role;
-   
-
-    if (role === "ADMIN") {
-      router.push("/admin");
+      router.push(getRouteForRole(data.user?.role));
+    } catch (err) {
+      console.error(err);
+      alert("Invalid email or password");
     }
-
-    if (role === "CLINICIAN") {
-      router.push("/dashboard/doctor");
-    }
-
-    if (role === "STAFF") {
-      router.push("/staff");
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert("Login failed");
   }
-}
-  
 
   return (
     <div style={{ padding: "2rem 0" }}>
