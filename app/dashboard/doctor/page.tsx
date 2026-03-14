@@ -42,7 +42,7 @@ useEffect(() => {
     try {
      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-const res = await api.get(`/encounters?doctorId=${user.id}`);
+const res = await api.get("/encounters?status=SCHEDULED");
       const data = res.data || [];
 
       const mapped = data.map((enc: any) => ({

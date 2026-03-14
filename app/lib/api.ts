@@ -5,18 +5,13 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    config.headers = config.headers || {};
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    // ADD THIS LINE
-    config.headers["x-api-key"] = "icdms_2026_ntccgfjck";
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+
+  config.headers["x-api-key"] = "icdms_2026_ntccgfjck";
 
   return config;
 });
