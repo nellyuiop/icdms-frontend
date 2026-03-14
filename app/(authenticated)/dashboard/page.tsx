@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import {
+  CalendarDays,
+  UserCheck,
+  Stethoscope,
+  ShieldCheck,
+  UserPlus,
+  Calendar,
+  Users,
+  ArrowRight,
+} from "lucide-react";
 
 type EncounterApiRecord = {
   id: string;
@@ -28,6 +38,18 @@ type UserRecord = {
   role: string;
 };
 
+const statusAccentColor = (status: Appointment["status"]) => {
+  if (status === "scheduled") return "#f59e0b";
+  if (status === "in-progress") return "#3b82f6";
+  return "#10b981";
+};
+
+const statusBadgeClass = (status: Appointment["status"]) => {
+  if (status === "scheduled") return "badge badge-scheduled";
+  if (status === "in-progress") return "badge badge-in-progress";
+  return "badge badge-completed";
+};
+
 export default function DashboardPage() {
   const { user, isAdmin, isClinician, isStaff } = useAuth();
   const [todayDate] = useState(() =>
@@ -40,7 +62,6 @@ export default function DashboardPage() {
   );
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
-  const [hoveredAptId, setHoveredAptId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -90,236 +111,100 @@ export default function DashboardPage() {
     ? `Dr. ${(user?.name || "Doctor").replace(/^Dr\.\s*/i, "")}`
     : user?.name || user?.email || "User";
 
-  const statusPillStyle = (status: Appointment["status"]) => {
-    if (status === "scheduled")
-      return { background: "#fef3c7", color: "#b45309", border: "1px solid #f59e0b33" };
-    if (status === "in-progress")
-      return { background: "#dbeafe", color: "#1e40af", border: "1px solid #3b82f633" };
-    return { background: "#d1fae5", color: "#065f46", border: "1px solid #10b98133" };
-  };
-
-  const statusAccentColor = (status: Appointment["status"]) => {
-    if (status === "scheduled") return "#f59e0b";
-    if (status === "in-progress") return "#3b82f6";
-    return "#10b981";
-  };
+  const roleStatItems = isAdmin
+    ? [
+        { label: "Clinicians", count: userCounts["CLINICIAN"] || 0, icon: Stethoscope, bg: "#dbeafe", color: "#2563eb" },
+        { label: "Staff", count: userCounts["STAFF"] || 0, icon: UserCheck, bg: "#d1fae5", color: "#10b981" },
+        { label: "Admins", count: userCounts["ADMIN"] || 0, icon: ShieldCheck, bg: "#fef2f2", color: "#dc2626" },
+      ]
+    : [];
 
   return (
     <div>
-      {/* Welcome Banner */}
-      <div
-        style={{
-          background:
-            "linear-gradient(135deg, #0b2b4a 0%, #1a4b76 50%, #2563eb 100%)",
-          color: "white",
-          padding: "2rem",
-          borderRadius: "16px",
-          marginBottom: "2rem",
-          boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
-        }}
-      >
-        <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-          Welcome back, {displayName}
-        </h1>
-        <p style={{ opacity: 0.9 }}>{todayDate}</p>
+      <div className="welcome-banner">
+        <h1>Welcome back, {displayName}</h1>
+        <p>{todayDate}</p>
       </div>
 
-      {/* Stats Row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isAdmin ? "1fr 1fr 1fr 1fr" : "1fr",
-          gap: "1.5rem",
-          marginBottom: "2rem",
-        }}
-      >
-        <div
-          style={{
-            background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-            border: "1px solid #e5e7eb",
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
-          <div
-            style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "10px",
-              background: "#dbeafe",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.3rem",
-            }}
-          >
-            📅
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon" style={{ background: "#dbeafe" }}>
+            <CalendarDays size={20} color="#2563eb" />
           </div>
           <div>
-            <div style={{ fontSize: "2rem", fontWeight: 700, color: "#0b2b4a" }}>
-              {appointments.length}
-            </div>
-            <div style={{ color: "#6b7280" }}>Today&apos;s appointments</div>
+            <div className="stat-value">{appointments.length}</div>
+            <div className="stat-label">Today&apos;s appointments</div>
           </div>
         </div>
 
-        {isAdmin &&
-          ["CLINICIAN", "STAFF", "ADMIN"].map((role) => (
-            <div
-              key={role}
-              style={{
-                background: "white",
-                padding: "1.5rem",
-                borderRadius: "12px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                border: "1px solid #e5e7eb",
-                display: "flex",
-                alignItems: "center",
-                gap: "1rem",
-              }}
-            >
+        {roleStatItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="stat-card">
+              <div className="stat-icon" style={{ background: item.bg }}>
+                <Icon size={20} color={item.color} />
+              </div>
               <div>
-                <div style={{ fontSize: "2rem", fontWeight: 700, color: "#0b2b4a" }}>
-                  {userCounts[role] || 0}
-                </div>
-                <div style={{ color: "#6b7280" }}>
-                  {role.charAt(0) + role.slice(1).toLowerCase()}s
-                </div>
+                <div className="stat-value">{item.count}</div>
+                <div className="stat-label">{item.label}</div>
               </div>
             </div>
-          ))}
+          );
+        })}
       </div>
 
-      {/* Quick Actions for STAFF */}
       {(isStaff || isAdmin) && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "1rem",
-            marginBottom: "2rem",
-          }}
-        >
-          <Link
-            href="/patients/new"
-            style={{
-              padding: "1rem",
-              background: "white",
-              borderRadius: "10px",
-              textDecoration: "none",
-              color: "#0b2b4a",
-              textAlign: "center",
-              border: "1px solid #e5e7eb",
-              fontWeight: 500,
-            }}
-          >
-            + Add Patient
+        <div className="quick-actions">
+          <Link href="/patients" className="quick-action-card">
+            <UserPlus size={16} />
+            Add Patient
           </Link>
-          <Link
-            href="/appointments"
-            style={{
-              padding: "1rem",
-              background: "white",
-              borderRadius: "10px",
-              textDecoration: "none",
-              color: "#0b2b4a",
-              textAlign: "center",
-              border: "1px solid #e5e7eb",
-              fontWeight: 500,
-            }}
-          >
+          <Link href="/appointments" className="quick-action-card">
+            <Calendar size={16} />
             Schedule Appointment
           </Link>
-          <Link
-            href="/patients"
-            style={{
-              padding: "1rem",
-              background: "white",
-              borderRadius: "10px",
-              textDecoration: "none",
-              color: "#0b2b4a",
-              textAlign: "center",
-              border: "1px solid #e5e7eb",
-              fontWeight: 500,
-            }}
-          >
+          <Link href="/patients" className="quick-action-card">
+            <Users size={16} />
             View Patients
           </Link>
         </div>
       )}
 
-      {/* Today's Schedule */}
-      <div
-        style={{
-          background: "white",
-          padding: "1.5rem",
-          borderRadius: "12px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-          border: "1px solid #e5e7eb",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "1rem",
-          }}
-        >
-          <h2 style={{ fontSize: "1.3rem", color: "#0b2b4a" }}>
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <h2 className="page-title" style={{ fontSize: "1.15rem" }}>
             Today&apos;s Schedule
           </h2>
-          <Link href="/appointments" style={{ color: "#0b2b4a" }}>
-            View full schedule
+          <Link
+            href="/appointments"
+            style={{ color: "var(--accent)", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "4px" }}
+          >
+            View all <ArrowRight size={14} />
           </Link>
         </div>
         {appointments.length === 0 ? (
-          <p style={{ color: "#6b7280" }}>No appointments today</p>
+          <p className="empty-state" style={{ padding: "1.5rem 0" }}>No appointments scheduled for today</p>
         ) : (
           appointments.map((apt) => (
-            <div
-              key={apt.id}
-              onMouseEnter={() => setHoveredAptId(apt.id)}
-              onMouseLeave={() => setHoveredAptId(null)}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "1rem",
-                borderBottom: "1px solid #e5e7eb",
-                background: hoveredAptId === apt.id ? "#f9fafb" : "white",
-              }}
-            >
-              <div style={{ display: "flex", gap: "1rem" }}>
+            <div key={apt.id} className="list-item">
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                 <div
-                  style={{
-                    width: "4px",
-                    height: "50px",
-                    background: statusAccentColor(apt.status),
-                  }}
+                  className="list-accent"
+                  style={{ background: statusAccentColor(apt.status) }}
                 />
                 <div>
-                  <strong>{apt.time}</strong>{" "}
-                  <Link href={`/patients/${apt.patientId}`}>
-                    {apt.patientName}
-                  </Link>
-                  <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+                  <div style={{ fontWeight: 500, fontSize: "0.9rem" }}>
+                    <span style={{ color: "var(--gray-600)", marginRight: "0.5rem" }}>{apt.time}</span>
+                    <Link href={`/patients/${apt.patientId}`} style={{ color: "var(--primary)", textDecoration: "none" }}>
+                      {apt.patientName}
+                    </Link>
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--gray-400)" }}>
                     {apt.reason}
                   </div>
                 </div>
               </div>
-              <span
-                style={{
-                  padding: "0.25rem 0.75rem",
-                  borderRadius: "999px",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  ...statusPillStyle(apt.status),
-                }}
-              >
+              <span className={statusBadgeClass(apt.status)}>
                 {apt.status}
               </span>
             </div>

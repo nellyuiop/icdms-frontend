@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import api from "@/app/lib/api";
+import { Plus, Trash2, Pencil, X, Check } from "lucide-react";
 
 type User = {
   id: string;
@@ -11,16 +12,20 @@ type User = {
   createdAt?: string;
 };
 
+const roleBadgeClass: Record<string, string> = {
+  ADMIN: "badge badge-admin",
+  CLINICIAN: "badge badge-clinician",
+  STAFF: "badge badge-staff",
+};
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Create user form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "STAFF" });
   const [submitting, setSubmitting] = useState(false);
 
-  // Edit role
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editRole, setEditRole] = useState("");
 
@@ -77,213 +82,142 @@ export default function AdminUsersPage() {
     }
   };
 
-  const roleBadgeColor: Record<string, string> = {
-    ADMIN: "#dc2626",
-    CLINICIAN: "#2563eb",
-    STAFF: "#10b981",
-  };
-
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>User Management</h2>
+      <div className="page-header">
+        <h2 className="page-title">User Management</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          style={{
-            padding: "8px 16px",
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
+          className={`btn ${showForm ? "btn-ghost" : "btn-primary"}`}
         >
-          {showForm ? "Cancel" : "+ Add User"}
+          {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add User</>}
         </button>
       </div>
 
-      {/* Create Form */}
       {showForm && (
-        <div
-          style={{
-            background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            marginBottom: "1.5rem",
-            maxWidth: "500px",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Create New User</h3>
-          <form onSubmit={handleCreate} style={{ display: "grid", gap: "1rem" }}>
-            <input
-              placeholder="Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-              style={inputStyle}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              style={inputStyle}
-            />
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              style={inputStyle}
-            >
-              <option value="STAFF">Staff</option>
-              <option value="CLINICIAN">Clinician</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding: "0.8rem",
-                background: "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: submitting ? "not-allowed" : "pointer",
-                fontWeight: 600,
-                opacity: submitting ? 0.7 : 1,
-              }}
-            >
+        <div className="form-panel" style={{ maxWidth: "500px" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
+            Create New User
+          </h3>
+          <form onSubmit={handleCreate} className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Name</label>
+              <input
+                className="form-input"
+                placeholder="Full name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                className="form-input"
+                type="email"
+                placeholder="Email address"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input
+                className="form-input"
+                type="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Role</label>
+              <select
+                className="form-input"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+              >
+                <option value="STAFF">Staff</option>
+                <option value="CLINICIAN">Clinician</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </div>
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
               {submitting ? "Creating..." : "Create User"}
             </button>
           </form>
         </div>
       )}
 
-      {/* Users Table */}
       {loading ? (
-        <p style={{ color: "#777" }}>Loading...</p>
+        <p className="loading-text">Loading...</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-            borderRadius: "8px",
-            overflow: "hidden",
-          }}
-        >
-          <thead style={{ background: "#f4f6f8" }}>
-            <tr>
-              <th style={{ padding: "12px", textAlign: "left" }}>Name</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Email</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Role</th>
-              <th style={{ padding: "12px" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} style={{ borderTop: "1px solid #eee" }}>
-                <td style={{ padding: "12px" }}>{user.name || "—"}</td>
-                <td style={{ padding: "12px" }}>{user.email}</td>
-                <td style={{ padding: "12px" }}>
-                  {editingUser === user.id ? (
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <select
-                        value={editRole}
-                        onChange={(e) => setEditRole(e.target.value)}
-                        style={{ padding: "4px", borderRadius: "4px", border: "1px solid #ccc" }}
-                      >
-                        <option value="STAFF">Staff</option>
-                        <option value="CLINICIAN">Clinician</option>
-                        <option value="ADMIN">Admin</option>
-                      </select>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th style={{ width: "1%" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td style={{ fontWeight: 500 }}>{user.name || "---"}</td>
+                  <td>{user.email}</td>
+                  <td>
+                    {editingUser === user.id ? (
+                      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                        <select
+                          className="form-input"
+                          style={{ width: "auto", padding: "4px 8px", fontSize: "0.8rem" }}
+                          value={editRole}
+                          onChange={(e) => setEditRole(e.target.value)}
+                        >
+                          <option value="STAFF">Staff</option>
+                          <option value="CLINICIAN">Clinician</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
+                        <button onClick={() => handleRoleUpdate(user.id)} className="btn btn-sm btn-primary">
+                          <Check size={13} />
+                        </button>
+                        <button onClick={() => setEditingUser(null)} className="btn btn-sm btn-ghost">
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className={`${roleBadgeClass[user.role] || "badge"}`} style={{ color: "white" }}>
+                        {user.role}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
                       <button
-                        onClick={() => handleRoleUpdate(user.id)}
-                        style={actionBtn("#2563eb")}
+                        onClick={() => {
+                          setEditingUser(user.id);
+                          setEditRole(user.role);
+                        }}
+                        className="btn btn-sm btn-ghost"
+                        title="Edit role"
                       >
-                        Save
+                        <Pencil size={13} />
                       </button>
-                      <button
-                        onClick={() => setEditingUser(null)}
-                        style={actionBtn("#6b7280")}
-                      >
-                        Cancel
+                      <button onClick={() => handleDelete(user.id)} className="btn btn-sm btn-danger" title="Delete user">
+                        <Trash2 size={13} />
                       </button>
                     </div>
-                  ) : (
-                    <span
-                      style={{
-                        padding: "2px 10px",
-                        borderRadius: "999px",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        color: "white",
-                        background: roleBadgeColor[user.role] || "#6b7280",
-                      }}
-                    >
-                      {user.role}
-                    </span>
-                  )}
-                </td>
-                <td style={{ padding: "12px" }}>
-                  <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
-                    <button
-                      onClick={() => {
-                        setEditingUser(user.id);
-                        setEditRole(user.role);
-                      }}
-                      style={actionBtn("#2563eb")}
-                    >
-                      Edit Role
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      style={actionBtn("#dc2626")}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.6rem",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};
-
-const actionBtn = (bg: string) => ({
-  padding: "4px 10px",
-  background: bg,
-  color: "white",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer" as const,
-  fontSize: "0.8rem",
-  fontWeight: 500 as const,
-});

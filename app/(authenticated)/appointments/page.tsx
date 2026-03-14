@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { Plus, X } from "lucide-react";
 
 type EncounterApiRecord = {
   id: string;
@@ -17,13 +18,22 @@ type EncounterApiRecord = {
 
 type FilterTab = "ALL" | "SCHEDULED" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED";
 
+const statusBadgeClass = (status: string) => {
+  const s = status.toLowerCase().replace("_", "-");
+  if (s === "scheduled") return "badge badge-scheduled";
+  if (s === "checked-in") return "badge badge-checked-in";
+  if (s === "in-progress") return "badge badge-in-progress";
+  if (s === "completed") return "badge badge-completed";
+  if (s === "cancelled") return "badge badge-cancelled";
+  return "badge";
+};
+
 export default function AppointmentsPage() {
   const { isAdmin, isClinician, isStaff } = useAuth();
   const [encounters, setEncounters] = useState<EncounterApiRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("ALL");
 
-  // Scheduling form
   const [showForm, setShowForm] = useState(false);
   const [schedForm, setSchedForm] = useState({
     patientId: "",
@@ -55,21 +65,6 @@ export default function AppointmentsPage() {
     filter === "ALL"
       ? encounters
       : encounters.filter((e) => e.status.toUpperCase().replace("-", "_") === filter);
-
-  const statusPillStyle = (status: string) => {
-    const s = status.toLowerCase();
-    if (s === "scheduled")
-      return { background: "#fef3c7", color: "#b45309" };
-    if (s === "checked_in" || s === "checked-in")
-      return { background: "#e0f2fe", color: "#0369a1" };
-    if (s === "in-progress" || s === "in_progress")
-      return { background: "#dbeafe", color: "#1e40af" };
-    if (s === "completed")
-      return { background: "#d1fae5", color: "#065f46" };
-    if (s === "cancelled")
-      return { background: "#fef2f2", color: "#dc2626" };
-    return { background: "#f3f4f6", color: "#374151" };
-  };
 
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,137 +107,76 @@ export default function AppointmentsPage() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Appointments</h2>
+      <div className="page-header">
+        <h2 className="page-title">Appointments</h2>
         {canSchedule && (
           <button
             onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: "8px 16px",
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
+            className={`btn ${showForm ? "btn-ghost" : "btn-primary"}`}
           >
-            {showForm ? "Cancel" : "+ Schedule Appointment"}
+            {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Schedule</>}
           </button>
         )}
       </div>
 
-      {/* Schedule Form */}
       {showForm && (
-        <div
-          style={{
-            background: "white",
-            padding: "1.5rem",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
-            marginBottom: "1.5rem",
-            maxWidth: "500px",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Schedule New Appointment</h3>
-          <form onSubmit={handleSchedule} style={{ display: "grid", gap: "1rem" }}>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                Patient ID
-              </label>
+        <div className="form-panel" style={{ maxWidth: "500px" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
+            Schedule Appointment
+          </h3>
+          <form onSubmit={handleSchedule} className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Patient ID</label>
               <input
+                className="form-input"
                 value={schedForm.patientId}
-                onChange={(e) =>
-                  setSchedForm({ ...schedForm, patientId: e.target.value })
-                }
+                onChange={(e) => setSchedForm({ ...schedForm, patientId: e.target.value })}
                 placeholder="Enter patient ID"
                 required
-                style={inputStyle}
               />
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                Visit Date & Time
-              </label>
+            <div className="form-group">
+              <label className="form-label">Visit Date & Time</label>
               <input
+                className="form-input"
                 type="datetime-local"
                 value={schedForm.visitDate}
-                onChange={(e) =>
-                  setSchedForm({ ...schedForm, visitDate: e.target.value })
-                }
+                onChange={(e) => setSchedForm({ ...schedForm, visitDate: e.target.value })}
                 required
-                style={inputStyle}
               />
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                Clinician User ID
-              </label>
+            <div className="form-group">
+              <label className="form-label">Clinician User ID</label>
               <input
+                className="form-input"
                 value={schedForm.clinicianUserId}
-                onChange={(e) =>
-                  setSchedForm({ ...schedForm, clinicianUserId: e.target.value })
-                }
+                onChange={(e) => setSchedForm({ ...schedForm, clinicianUserId: e.target.value })}
                 placeholder="Enter clinician user ID"
                 required
-                style={inputStyle}
               />
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: "4px", fontWeight: 500 }}>
-                Reason (optional)
-              </label>
+            <div className="form-group">
+              <label className="form-label">Reason (optional)</label>
               <input
+                className="form-input"
                 value={schedForm.reason}
-                onChange={(e) =>
-                  setSchedForm({ ...schedForm, reason: e.target.value })
-                }
+                onChange={(e) => setSchedForm({ ...schedForm, reason: e.target.value })}
                 placeholder="e.g. Follow-up"
-                style={inputStyle}
               />
             </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding: "0.8rem",
-                background: "#2563eb",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: submitting ? "not-allowed" : "pointer",
-                fontWeight: 600,
-                opacity: submitting ? 0.7 : 1,
-              }}
-            >
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
               {submitting ? "Scheduling..." : "Schedule"}
             </button>
           </form>
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
+      <div className="filter-tabs">
         {tabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setFilter(tab.value)}
-            style={{
-              padding: "8px 16px",
-              borderRadius: "6px",
-              border: "1px solid #e5e7eb",
-              background: filter === tab.value ? "#0b2b4a" : "white",
-              color: filter === tab.value ? "white" : "#374151",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
+            className={`filter-tab${filter === tab.value ? " active" : ""}`}
           >
             {tab.label}
           </button>
@@ -250,122 +184,76 @@ export default function AppointmentsPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#777" }}>Loading...</p>
+        <p className="loading-text">Loading...</p>
       ) : filtered.length === 0 ? (
-        <p style={{ color: "#777" }}>No appointments found</p>
+        <p className="empty-state">No appointments found</p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            background: "white",
-            borderRadius: "8px",
-            overflow: "hidden",
-          }}
-        >
-          <thead style={{ background: "#f4f6f8" }}>
-            <tr>
-              <th style={{ padding: "12px", textAlign: "left" }}>Patient</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Date</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Clinician</th>
-              <th style={{ padding: "12px", textAlign: "left" }}>Status</th>
-              <th style={{ padding: "12px" }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((enc) => {
-              const s = enc.status.toUpperCase().replace("-", "_");
-              return (
-                <tr key={enc.id} style={{ borderTop: "1px solid #eee" }}>
-                  <td style={{ padding: "12px" }}>
-                    <Link
-                      href={`/patients/${enc.patient?.id || enc.patient_id}`}
-                      style={{ color: "#2563eb" }}
-                    >
-                      {enc.patient?.name || enc.patient_id || "—"}
-                    </Link>
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {new Date(
-                      enc.visit_date || enc.scheduledAt || Date.now()
-                    ).toLocaleString()}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {enc.clinician?.name || "—"}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    <span
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "999px",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        ...statusPillStyle(enc.status),
-                      }}
-                    >
-                      {enc.status.toLowerCase().replace("_", "-")}
-                    </span>
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
-                      {canSchedule && s === "SCHEDULED" && (
-                        <>
-                          <button
-                            onClick={() => updateStatus(enc.id, "CHECKED_IN")}
-                            style={actionBtn("#10b981")}
-                          >
-                            Check In
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Clinician</th>
+                <th>Status</th>
+                <th style={{ width: "1%" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((enc) => {
+                const s = enc.status.toUpperCase().replace("-", "_");
+                return (
+                  <tr key={enc.id}>
+                    <td>
+                      <Link
+                        href={`/patients/${enc.patient?.id || enc.patient_id}`}
+                        style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}
+                      >
+                        {enc.patient?.name || enc.patient_id || "---"}
+                      </Link>
+                    </td>
+                    <td>
+                      {new Date(
+                        enc.visit_date || enc.scheduledAt || Date.now()
+                      ).toLocaleString()}
+                    </td>
+                    <td>{enc.clinician?.name || "---"}</td>
+                    <td>
+                      <span className={statusBadgeClass(enc.status)}>
+                        {enc.status.toLowerCase().replace("_", "-")}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
+                        {canSchedule && s === "SCHEDULED" && (
+                          <>
+                            <button onClick={() => updateStatus(enc.id, "CHECKED_IN")} className="btn btn-sm btn-secondary">
+                              Check In
+                            </button>
+                            <button onClick={() => updateStatus(enc.id, "CANCELLED")} className="btn btn-sm btn-danger">
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                        {canManage && s === "CHECKED_IN" && (
+                          <button onClick={() => updateStatus(enc.id, "IN_PROGRESS")} className="btn btn-sm btn-primary">
+                            Start
                           </button>
-                          <button
-                            onClick={() => updateStatus(enc.id, "CANCELLED")}
-                            style={actionBtn("#dc2626")}
-                          >
-                            Cancel
+                        )}
+                        {canManage && s === "IN_PROGRESS" && (
+                          <button onClick={() => updateStatus(enc.id, "COMPLETED")} className="btn btn-sm btn-primary">
+                            Complete
                           </button>
-                        </>
-                      )}
-                      {canManage && s === "CHECKED_IN" && (
-                        <button
-                          onClick={() => updateStatus(enc.id, "IN_PROGRESS")}
-                          style={actionBtn("#2563eb")}
-                        >
-                          Start
-                        </button>
-                      )}
-                      {canManage && s === "IN_PROGRESS" && (
-                        <button
-                          onClick={() => updateStatus(enc.id, "COMPLETED")}
-                          style={actionBtn("#2563eb")}
-                        >
-                          Complete
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.6rem",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-};
-
-const actionBtn = (bg: string) => ({
-  padding: "4px 10px",
-  background: bg,
-  color: "white",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "0.8rem",
-  fontWeight: 500 as const,
-});

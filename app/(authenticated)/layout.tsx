@@ -11,20 +11,11 @@ export default function AuthenticatedLayout({
 }) {
   return (
     <AuthProvider>
-      <div style={{ display: "flex", minHeight: "100vh" }}>
+      <div className="app-shell">
         <Sidebar />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div className="app-main-wrapper">
           <TopBar />
-          <main
-            style={{
-              flex: 1,
-              padding: "1.5rem",
-              background: "#f5f7fb",
-              overflowY: "auto",
-            }}
-          >
-            {children}
-          </main>
+          <main className="app-content">{children}</main>
         </div>
       </div>
     </AuthProvider>
