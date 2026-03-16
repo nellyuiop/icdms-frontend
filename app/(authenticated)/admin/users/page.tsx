@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import PageBackLink from "@/components/PageBackLink";
 import { Plus, Trash2, Pencil, X, Check, KeyRound, Copy } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import RoleSelect from "@/components/RoleSelect";
@@ -143,6 +144,8 @@ export default function AdminUsersPage() {
 
   return (
     <div>
+      <PageBackLink />
+
       <div className="page-header">
         <h2 className="page-title">User Management</h2>
         <button

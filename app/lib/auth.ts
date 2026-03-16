@@ -13,8 +13,13 @@ type AuthSessionResponse = {
   user?: AuthUser;
 };
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.cliniq.cloud";
+const defaultApiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:4000"
+    : "https://api.cliniq.cloud");
+
+export const API_BASE_URL = defaultApiBaseUrl;
 export const API_KEY =
   process.env.NEXT_PUBLIC_API_KEY || "icdms_2026_ntccgfjck";
 
