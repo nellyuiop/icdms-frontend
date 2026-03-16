@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import PatientSubnav from "@/components/PatientSubnav";
 import { Play } from "lucide-react";
 
 type EncounterApiRecord = {
@@ -113,6 +114,8 @@ export default function PatientVisitsPage() {
 
   return (
     <div>
+      <PatientSubnav patientId={id} />
+
       <div className="page-header">
         <h2 className="page-title">Visit History</h2>
       </div>

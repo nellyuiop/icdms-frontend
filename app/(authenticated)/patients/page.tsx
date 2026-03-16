@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import PageBackLink from "@/components/PageBackLink";
 import { Search, Plus, Trash2, Eye, X, Calendar } from "lucide-react";
 import ScheduleVisitModal from "@/components/ScheduleVisitModal";
 
@@ -43,10 +44,8 @@ export default function PatientsPage() {
   const canAdd = isAdmin || isStaff;
   const canSchedule = isAdmin || isStaff;
 
-  // Schedule visit modal
   const [scheduleTarget, setScheduleTarget] = useState<PatientRecord | null>(null);
 
-  // Add patient inline form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", dob: "", gender: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -134,6 +133,8 @@ export default function PatientsPage() {
 
   return (
     <div>
+      <PageBackLink />
+
       <div className="page-header">
         <h2 className="page-title">Patients</h2>
         {canAdd && (

@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { Plus, Trash2, X } from "lucide-react";
+import PatientSubnav from "@/components/PatientSubnav";
+import FilePreviewModal from "@/components/FilePreviewModal";
+import { Paperclip, Plus, Trash2, Upload, X } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 
 type LabData = {
@@ -14,6 +16,14 @@ type LabData = {
   referenceRange?: string;
   status?: "NORMAL" | "HIGH" | "LOW" | "CRITICAL";
   notes?: string;
+  reportDate?: string;
+};
+
+type LabAttachment = {
+  fileName: string;
+  mimeType?: string;
+  size?: number;
+  fileUrl?: string;
 };
 
 type LabRecord = {
@@ -23,6 +33,13 @@ type LabRecord = {
   created_at?: string;
   data?: LabData;
   data_json?: string;
+  attachment?: LabAttachment | null;
+};
+
+type PreviewState = {
+  fileName: string;
+  mimeType?: string;
+  fileUrl: string;
 };
 
 const statusBadgeClass: Record<string, string> = {
@@ -30,6 +47,13 @@ const statusBadgeClass: Record<string, string> = {
   HIGH: "badge badge-high",
   LOW: "badge badge-low",
   CRITICAL: "badge badge-critical",
+};
+
+const formatFileSize = (size?: number) => {
+  if (!size) return "-";
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 export default function PatientLabsPage() {
@@ -48,9 +72,13 @@ export default function PatientLabsPage() {
     referenceRange: "",
     status: "NORMAL" as LabData["status"],
     notes: "",
+    reportDate: "",
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [openingAttachmentId, setOpeningAttachmentId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
+  const [preview, setPreview] = useState<PreviewState | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -74,26 +102,90 @@ export default function PatientLabsPage() {
     fetchLabs();
   }, [fetchLabs]);
 
+  useEffect(() => {
+    return () => {
+      if (preview?.fileUrl) {
+        URL.revokeObjectURL(preview.fileUrl);
+      }
+    };
+  }, [preview]);
+
+  const resetForm = () => {
+    setForm({
+      testName: "",
+      result: "",
+      unit: "",
+      referenceRange: "",
+      status: "NORMAL",
+      notes: "",
+      reportDate: "",
+    });
+    setSelectedFile(null);
+  };
+
+  const closePreview = () => {
+    if (preview?.fileUrl) {
+      URL.revokeObjectURL(preview.fileUrl);
+    }
+    setPreview(null);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setFormError("");
+
     try {
-      await api.post(`/patients/${id}/labs`, {
-        testName: form.testName,
-        result: Number(form.result),
-        unit: form.unit || undefined,
-        referenceRange: form.referenceRange || undefined,
-        status: form.status || undefined,
-        notes: form.notes || undefined,
-      });
+      const formData = new FormData();
+      formData.append("testName", form.testName);
+      formData.append("result", form.result);
+      if (form.unit) formData.append("unit", form.unit);
+      if (form.referenceRange) formData.append("referenceRange", form.referenceRange);
+      if (form.status) formData.append("status", form.status);
+      if (form.notes) formData.append("notes", form.notes);
+      if (form.reportDate) formData.append("reportDate", new Date(form.reportDate).toISOString());
+      if (selectedFile) formData.append("file", selectedFile);
+
+      await api.post(`/patients/${id}/labs`, formData);
       setShowForm(false);
-      setForm({ testName: "", result: "", unit: "", referenceRange: "", status: "NORMAL", notes: "" });
+      resetForm();
       fetchLabs();
-    } catch {
+    } catch (error) {
+      console.error("Error adding lab result:", error);
       setFormError("Failed to add lab result.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleOpenAttachment = async (lab: LabRecord) => {
+    setOpeningAttachmentId(lab.id);
+    setActionError("");
+
+    try {
+      const response = await api.get(`/patients/${id}/labs/${lab.id}/attachment`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], {
+        type: lab.attachment?.mimeType || response.headers["content-type"] || "application/octet-stream",
+      });
+      const blobUrl = URL.createObjectURL(blob);
+
+      if (preview?.fileUrl) {
+        URL.revokeObjectURL(preview.fileUrl);
+      }
+
+      setPreview({
+        fileName: lab.attachment?.fileName || `lab-${lab.id}`,
+        mimeType: lab.attachment?.mimeType || response.headers["content-type"] || undefined,
+        fileUrl: blobUrl,
+      });
+    } catch (error) {
+      console.error("Error opening lab attachment:", error);
+      setActionError("Failed to open lab attachment.");
+    } finally {
+      setOpeningAttachmentId(null);
     }
   };
 
@@ -105,7 +197,8 @@ export default function PatientLabsPage() {
       await api.delete(`/patients/${id}/labs/${deleteTarget}`);
       setDeleteTarget(null);
       fetchLabs();
-    } catch {
+    } catch (error) {
+      console.error("Error deleting lab result:", error);
       setActionError("Failed to delete lab result.");
       setDeleteTarget(null);
     } finally {
@@ -127,11 +220,19 @@ export default function PatientLabsPage() {
 
   return (
     <div>
+      <PatientSubnav patientId={id} />
+
       <div className="page-header">
         <h2 className="page-title">Lab Results</h2>
         {canUpload && (
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              setShowForm(!showForm);
+              if (showForm) {
+                setFormError("");
+                resetForm();
+              }
+            }}
             className={`btn ${showForm ? "btn-ghost" : "btn-primary"}`}
           >
             {showForm ? <><X size={15} /> Cancel</> : <><Plus size={15} /> Add Result</>}
@@ -142,10 +243,13 @@ export default function PatientLabsPage() {
       {actionError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{actionError}</div>}
 
       {showForm && (
-        <div className="form-panel" style={{ maxWidth: "500px" }}>
+        <div className="form-panel" style={{ maxWidth: "560px" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--primary)", marginBottom: "1rem" }}>
             Add Lab Result
           </h3>
+          <p style={{ color: "var(--gray-500)", marginBottom: "1rem" }}>
+            Enter the lab result details below. You can optionally attach the original report.
+          </p>
           {formError && <div className="alert alert-error">{formError}</div>}
           <form onSubmit={handleCreate} className="form-grid">
             <div className="form-group">
@@ -206,6 +310,15 @@ export default function PatientLabsPage() {
               </div>
             </div>
             <div className="form-group">
+              <label className="form-label">Report Date</label>
+              <input
+                className="form-input"
+                type="datetime-local"
+                value={form.reportDate}
+                onChange={(e) => setForm({ ...form, reportDate: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
               <label className="form-label">Notes (optional)</label>
               <input
                 className="form-input"
@@ -214,6 +327,23 @@ export default function PatientLabsPage() {
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             </div>
+            <div className="form-group">
+              <label className="form-label">Attach Report (optional)</label>
+              <input
+                className="form-input"
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              />
+              <small style={{ color: "var(--gray-500)" }}>
+                Accepted formats: PDF, JPG, PNG, WEBP. Max size: 10 MB.
+              </small>
+            </div>
+            {selectedFile && (
+              <div className="alert" style={{ background: "var(--gray-50)", color: "var(--gray-600)" }}>
+                <Upload size={14} /> {selectedFile.name} ({formatFileSize(selectedFile.size)})
+              </div>
+            )}
             <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
               {submitting ? "Adding..." : "Add Lab Result"}
             </button>
@@ -233,6 +363,7 @@ export default function PatientLabsPage() {
                 <th>Test</th>
                 <th>Value</th>
                 <th>Status</th>
+                <th>Attachment</th>
                 <th>Date</th>
                 <th style={{ width: "1%" }}></th>
               </tr>
@@ -241,6 +372,8 @@ export default function PatientLabsPage() {
               {labs.map((lab) => {
                 const data = getLabData(lab);
                 const labStatus = data?.status || "NORMAL";
+                const displayDate = data?.reportDate || lab.report_date || lab.created_at;
+
                 return (
                   <tr key={lab.id}>
                     <td style={{ fontWeight: 500 }}>{data?.testName || "---"}</td>
@@ -256,10 +389,24 @@ export default function PatientLabsPage() {
                       )}
                     </td>
                     <td>
-                      {(lab.report_date || lab.created_at)
-                        ? new Date(lab.report_date || lab.created_at!).toLocaleDateString()
-                        : "---"}
+                      {lab.attachment ? (
+                        <button
+                          onClick={() => handleOpenAttachment(lab)}
+                          className="btn btn-ghost"
+                          style={{ padding: 0, display: "inline-flex", alignItems: "center", gap: "4px" }}
+                          disabled={openingAttachmentId === lab.id}
+                        >
+                          {openingAttachmentId === lab.id ? "Opening..." : (
+                            <>
+                              <Paperclip size={12} /> View report
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <span style={{ color: "var(--gray-400)" }}>---</span>
+                      )}
                     </td>
+                    <td>{displayDate ? new Date(displayDate).toLocaleString() : "---"}</td>
                     <td>
                       {canDelete && (
                         <button onClick={() => setDeleteTarget(lab.id)} className="btn btn-sm btn-danger">
@@ -284,6 +431,14 @@ export default function PatientLabsPage() {
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <FilePreviewModal
+        open={!!preview}
+        fileName={preview?.fileName || ""}
+        fileUrl={preview?.fileUrl || ""}
+        mimeType={preview?.mimeType}
+        onClose={closePreview}
       />
     </div>
   );
