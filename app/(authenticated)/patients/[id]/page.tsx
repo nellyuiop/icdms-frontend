@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import PatientSubnav from "@/components/PatientSubnav";
 import {
-  ArrowLeft,
   Pencil,
   Trash2,
-  FileText,
-  FlaskConical,
-  Activity,
   Save,
   X,
 } from "lucide-react";
@@ -29,7 +25,6 @@ export default function PatientDetailPage() {
   const { isAdmin, isClinician } = useAuth();
   const params = useParams();
   const router = useRouter();
-  const pathname = usePathname();
   const id = params.id as string;
 
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -95,19 +90,11 @@ export default function PatientDetailPage() {
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!patient) return null;
 
-  const tabs = [
-    { label: "Documents", href: `/patients/${id}/documents`, icon: FileText },
-    { label: "Labs", href: `/patients/${id}/labs`, icon: FlaskConical },
-    { label: "Visits", href: `/patients/${id}/visits`, icon: Activity },
-  ];
-
   return (
     <div>
       {actionError && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{actionError}</div>}
 
-      <button onClick={() => router.push("/patients")} className="btn btn-ghost" style={{ marginBottom: "1rem" }}>
-        <ArrowLeft size={14} /> Back to Patients
-      </button>
+      <PatientSubnav patientId={id} />
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem" }}>
@@ -207,23 +194,6 @@ export default function PatientDetailPage() {
             )}
           </div>
         )}
-      </div>
-
-      <div className="tab-nav">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const active = pathname.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`tab-link${active ? " active" : ""}`}
-            >
-              <Icon size={15} />
-              {tab.label}
-            </Link>
-          );
-        })}
       </div>
 
       {deleteConfirm && (

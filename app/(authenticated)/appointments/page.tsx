@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import PageBackLink from "@/components/PageBackLink";
 import { Plus } from "lucide-react";
 import ScheduleVisitModal from "@/components/ScheduleVisitModal";
 
@@ -80,6 +81,8 @@ export default function AppointmentsPage() {
 
   return (
     <div>
+      <PageBackLink />
+
       <div className="page-header">
         <h2 className="page-title">Appointments</h2>
         {canSchedule && (
