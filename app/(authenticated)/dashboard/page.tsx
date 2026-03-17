@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
 import {
@@ -13,6 +14,7 @@ import {
   Calendar,
   Users,
   ArrowRight,
+  Play,
 } from "lucide-react";
 
 type EncounterApiRecord = {
@@ -30,7 +32,7 @@ type Appointment = {
   patientId: string;
   time: string;
   reason: string;
-  status: "scheduled" | "in-progress" | "completed";
+  status: "scheduled" | "checked-in" | "in-progress" | "completed";
 };
 
 type UserRecord = {
@@ -40,18 +42,21 @@ type UserRecord = {
 
 const statusAccentColor = (status: Appointment["status"]) => {
   if (status === "scheduled") return "#f59e0b";
+  if (status === "checked-in") return "#0ea5e9";
   if (status === "in-progress") return "#3b82f6";
   return "#10b981";
 };
 
 const statusBadgeClass = (status: Appointment["status"]) => {
   if (status === "scheduled") return "badge badge-scheduled";
+  if (status === "checked-in") return "badge badge-checked-in";
   if (status === "in-progress") return "badge badge-in-progress";
   return "badge badge-completed";
 };
 
 export default function DashboardPage() {
   const { user, isAdmin, isClinician, isStaff } = useAuth();
+  const router = useRouter();
   const [todayDate] = useState(() =>
     new Date().toLocaleDateString("en-US", {
       weekday: "long",
@@ -64,15 +69,30 @@ export default function DashboardPage() {
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    let isCancelled = false;
+
+    const loadAppointments = async () => {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const res = await api.get<EncounterApiRecord[]>(
-          `/encounters?status=SCHEDULED&date=${today}`
-        );
+        const query = isClinician
+          ? `/encounters?date=${today}`
+          : `/encounters?status=SCHEDULED&date=${today}`;
+        const res = await api.get<EncounterApiRecord[]>(query);
         const data = res.data || [];
+        const visibleAppointments = isClinician
+          ? data.filter((enc) =>
+              ["CHECKED_IN", "IN_PROGRESS", "SCHEDULED"].includes(
+                enc.status.toUpperCase()
+              )
+            )
+          : data;
+
+        if (isCancelled) {
+          return;
+        }
+
         setAppointments(
-          data.map((enc) => ({
+          visibleAppointments.map((enc) => ({
             id: enc.id,
             patientName: enc.patient?.name || "Unknown",
             patientId: enc.patient?.id || enc.patient_id || "",
@@ -80,18 +100,28 @@ export default function DashboardPage() {
               enc.visit_date || enc.scheduledAt || Date.now()
             ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             reason: "Visit",
-            status: enc.status.toLowerCase() as Appointment["status"],
+            status: enc.status
+              .toLowerCase()
+              .replace("_", "-") as Appointment["status"],
           }))
         );
       } catch (err) {
         console.error("Failed to load appointments", err);
       }
     };
-    fetchAppointments();
-  }, []);
+
+    void loadAppointments();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isClinician]);
 
   useEffect(() => {
     if (!isAdmin) return;
+
+    let isCancelled = false;
+
     const fetchUsers = async () => {
       try {
         const res = await api.get<UserRecord[]>("/api/users");
@@ -99,13 +129,30 @@ export default function DashboardPage() {
         (res.data || []).forEach((u) => {
           counts[u.role] = (counts[u.role] || 0) + 1;
         });
-        setUserCounts(counts);
+
+        if (!isCancelled) {
+          setUserCounts(counts);
+        }
       } catch (err) {
         console.error("Failed to load users", err);
       }
     };
-    fetchUsers();
+
+    void fetchUsers();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [isAdmin]);
+
+  const handleStartVisit = async (visitId: string, patientId: string) => {
+    try {
+      await api.patch(`/encounters/${visitId}/start`);
+      router.push(`/patients/${patientId}/visits?activeVisit=${visitId}`);
+    } catch (err) {
+      console.error("Failed to start visit", err);
+    }
+  };
 
   const displayName = isClinician
     ? `Dr. ${(user?.name || "Doctor").replace(/^Dr\.\s*/i, "")}`
@@ -113,9 +160,27 @@ export default function DashboardPage() {
 
   const roleStatItems = isAdmin
     ? [
-        { label: "Clinicians", count: userCounts["CLINICIAN"] || 0, icon: Stethoscope, bg: "#dbeafe", color: "#2563eb" },
-        { label: "Staff", count: userCounts["STAFF"] || 0, icon: UserCheck, bg: "#d1fae5", color: "#10b981" },
-        { label: "Admins", count: userCounts["ADMIN"] || 0, icon: ShieldCheck, bg: "#fef2f2", color: "#dc2626" },
+        {
+          label: "Clinicians",
+          count: userCounts["CLINICIAN"] || 0,
+          icon: Stethoscope,
+          bg: "#dbeafe",
+          color: "#2563eb",
+        },
+        {
+          label: "Staff",
+          count: userCounts["STAFF"] || 0,
+          icon: UserCheck,
+          bg: "#d1fae5",
+          color: "#10b981",
+        },
+        {
+          label: "Admins",
+          count: userCounts["ADMIN"] || 0,
+          icon: ShieldCheck,
+          bg: "#fef2f2",
+          color: "#dc2626",
+        },
       ]
     : [];
 
@@ -171,19 +236,35 @@ export default function DashboardPage() {
       )}
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
+          }}
+        >
           <h2 className="page-title" style={{ fontSize: "1.15rem" }}>
             Today&apos;s Schedule
           </h2>
           <Link
             href="/appointments"
-            style={{ color: "var(--accent)", textDecoration: "none", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "4px" }}
+            style={{
+              color: "var(--accent)",
+              textDecoration: "none",
+              fontSize: "0.85rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
           >
             View all <ArrowRight size={14} />
           </Link>
         </div>
         {appointments.length === 0 ? (
-          <p className="empty-state" style={{ padding: "1.5rem 0" }}>No appointments scheduled for today</p>
+          <p className="empty-state" style={{ padding: "1.5rem 0" }}>
+            No appointments scheduled for today
+          </p>
         ) : (
           appointments.map((apt) => (
             <div key={apt.id} className="list-item">
@@ -194,8 +275,13 @@ export default function DashboardPage() {
                 />
                 <div>
                   <div style={{ fontWeight: 500, fontSize: "0.9rem" }}>
-                    <span style={{ color: "var(--gray-600)", marginRight: "0.5rem" }}>{apt.time}</span>
-                    <Link href={`/patients/${apt.patientId}`} style={{ color: "var(--primary)", textDecoration: "none" }}>
+                    <span style={{ color: "var(--gray-600)", marginRight: "0.5rem" }}>
+                      {apt.time}
+                    </span>
+                    <Link
+                      href={`/patients/${apt.patientId}`}
+                      style={{ color: "var(--primary)", textDecoration: "none" }}
+                    >
                       {apt.patientName}
                     </Link>
                   </div>
@@ -204,9 +290,27 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <span className={statusBadgeClass(apt.status)}>
-                {apt.status}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {isClinician && apt.status === "checked-in" && (
+                  <button
+                    onClick={() => handleStartVisit(apt.id, apt.patientId)}
+                    className="btn btn-sm btn-primary"
+                  >
+                    <Play size={12} /> Start Visit
+                  </button>
+                )}
+                {isClinician && apt.status === "in-progress" && (
+                  <button
+                    onClick={() =>
+                      router.push(`/patients/${apt.patientId}/visits?activeVisit=${apt.id}`)
+                    }
+                    className="btn btn-sm btn-ghost"
+                  >
+                    Open Visit
+                  </button>
+                )}
+                <span className={statusBadgeClass(apt.status)}>{apt.status}</span>
+              </div>
             </div>
           ))
         )}
