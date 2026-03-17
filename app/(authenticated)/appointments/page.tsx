@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
 import PageBackLink from "@/components/PageBackLink";
-import { Plus } from "lucide-react";
+import { Play, Plus } from "lucide-react";
 import ScheduleVisitModal from "@/components/ScheduleVisitModal";
 
 type EncounterApiRecord = {
@@ -32,6 +33,7 @@ const statusBadgeClass = (status: string) => {
 
 export default function AppointmentsPage() {
   const { isAdmin, isClinician, isStaff } = useAuth();
+  const router = useRouter();
   const [encounters, setEncounters] = useState<EncounterApiRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("ALL");
@@ -68,6 +70,16 @@ export default function AppointmentsPage() {
       fetchEncounters();
     } catch {
       setError("Failed to update appointment.");
+    }
+  };
+
+  const startVisit = async (encounterId: string, patientId: string) => {
+    setError("");
+    try {
+      await api.patch(`/encounters/${encounterId}/start`);
+      router.push(`/patients/${patientId}/visits?activeVisit=${encounterId}`);
+    } catch {
+      setError("Failed to start appointment.");
     }
   };
 
@@ -137,11 +149,12 @@ export default function AppointmentsPage() {
             <tbody>
               {filtered.map((enc) => {
                 const s = enc.status.toUpperCase().replace("-", "_");
+                const patientId = enc.patient?.id || enc.patient_id || "";
                 return (
                   <tr key={enc.id}>
                     <td>
                       <Link
-                        href={`/patients/${enc.patient?.id || enc.patient_id}`}
+                        href={`/patients/${patientId}`}
                         style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}
                       >
                         {enc.patient?.name || enc.patient_id || "---"}
@@ -171,8 +184,13 @@ export default function AppointmentsPage() {
                           </>
                         )}
                         {canManage && s === "CHECKED_IN" && (
-                          <button onClick={() => updateStatus(enc.id, "IN_PROGRESS")} className="btn btn-sm btn-primary">
-                            Start
+                          <button onClick={() => startVisit(enc.id, patientId)} className="btn btn-sm btn-primary">
+                            <Play size={12} /> Start
+                          </button>
+                        )}
+                        {canManage && s === "IN_PROGRESS" && (
+                          <button onClick={() => router.push(`/patients/${patientId}/visits?activeVisit=${enc.id}`)} className="btn btn-sm btn-ghost">
+                            Open Visit
                           </button>
                         )}
                         {canManage && s === "IN_PROGRESS" && (
