@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Activity, ArrowLeft, FileText, FlaskConical, UserRound } from "lucide-react";
 
 type PatientSubnavProps = {
@@ -17,10 +17,28 @@ const tabs = [
 
 export default function PatientSubnav({ patientId }: PatientSubnavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeVisitId = searchParams.get("activeVisit");
   const overviewHref = `/patients/${patientId}`;
+  const visitsHref = `/patients/${patientId}/visits`;
   const onOverviewPage = pathname === overviewHref;
-  const backHref = onOverviewPage ? "/patients" : overviewHref;
-  const backLabel = onOverviewPage ? "Back to Patients" : "Back to Profile";
+  const onVisitsPage = pathname === visitsHref;
+  const visitContext = activeVisitId ? `?activeVisit=${activeVisitId}` : "";
+
+  const backHref = activeVisitId
+    ? onVisitsPage
+      ? overviewHref
+      : `${visitsHref}?activeVisit=${activeVisitId}`
+    : onOverviewPage
+      ? "/patients"
+      : overviewHref;
+  const backLabel = activeVisitId
+    ? onVisitsPage
+      ? "Back to Profile"
+      : "Back to Active Visit"
+    : onOverviewPage
+      ? "Back to Patients"
+      : "Back to Profile";
 
   return (
     <div style={{ marginBottom: "1.5rem" }}>
@@ -30,9 +48,9 @@ export default function PatientSubnav({ patientId }: PatientSubnavProps) {
 
       <div className="tab-nav">
         {tabs.map((tab) => {
-          const href = tab.href(patientId);
+          const href = `${tab.href(patientId)}${visitContext}`;
           const Icon = tab.icon;
-          const active = pathname === href;
+          const active = pathname === tab.href(patientId);
 
           return (
             <Link key={href} href={href} className={`tab-link${active ? " active" : ""}`}>
