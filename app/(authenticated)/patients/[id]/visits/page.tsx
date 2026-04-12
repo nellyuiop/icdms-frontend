@@ -1,15 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
 import PatientSubnav from "@/components/PatientSubnav";
 import {
-  Activity,
   FileText,
-  FlaskConical,
   Play,
   Save,
   CheckCircle2,
@@ -180,7 +177,6 @@ export default function PatientVisitsPage() {
     () => visits.find((visit) => visit.id === activeVisitId) || null,
     [visits, activeVisitId]
   );
-  const activeVisitQuery = activeVisit ? `?activeVisit=${activeVisit.id}` : "";
 
   const mockDetectedVitals = useMemo<MockDetection[]>(
     () =>
@@ -415,18 +411,6 @@ export default function PatientVisitsPage() {
             }}
           >
             <div className="form-panel" style={{ margin: 0 }}>
-              <div className="quick-actions" style={{ marginBottom: "1rem" }}>
-                <Link href={`/patients/${id}/labs${activeVisitQuery}`} className="quick-action-card">
-                  <FlaskConical size={16} /> View Labs
-                </Link>
-                <Link href={`/patients/${id}/documents${activeVisitQuery}`} className="quick-action-card">
-                  <FileText size={16} /> View Documents
-                </Link>
-                <Link href={`/patients/${id}${activeVisitQuery}`} className="quick-action-card">
-                  <Activity size={16} /> Patient Overview
-                </Link>
-              </div>
-
               <h3
                 style={{
                   fontSize: "0.95rem",
@@ -469,14 +453,18 @@ export default function PatientVisitsPage() {
               </h3>
               <div className="ai-detect-panel">
                 <div className="ai-detect-header">
-                  <div>
+                  <div className="ai-detect-heading">
                     <div className="ai-detect-kicker">AI-assisted</div>
-                    <div className="ai-detect-title">Upload document</div>
+                    <div className="ai-detect-title">Document extraction</div>
                     <div className="ai-detect-copy">
-                      Extract vitals from the uploaded clinical document for review before saving.
+                      Upload a clinical document to extract vitals for review before saving.
                     </div>
                   </div>
-                  <button type="button" className="btn btn-primary" onClick={handleAiUploadClick}>
+                  <button
+                    type="button"
+                    className="btn btn-primary ai-detect-upload"
+                    onClick={handleAiUploadClick}
+                  >
                     <Upload size={14} /> Upload Document
                   </button>
                 </div>
@@ -489,49 +477,58 @@ export default function PatientVisitsPage() {
                   style={{ display: "none" }}
                 />
 
-                <div className="ai-detect-source ai-detect-source-compact">
-                  <span className="detail-item-value">
-                    {aiSourceFile ? aiSourceFile.name : "No document selected"}
-                  </span>
-                  <span className="ai-detect-source-status">
-                    {aiSourceFile ? "Detected values ready" : "Waiting for upload"}
+                <div className="ai-detect-source">
+                  <div className="ai-detect-source-main">
+                    <div className="ai-detect-source-label">Selected document</div>
+                    <div className="ai-detect-source-name">
+                      {aiSourceFile ? aiSourceFile.name : "No document selected"}
+                    </div>
+                  </div>
+                  <span className={`ai-detect-source-status${aiSourceFile ? "" : " is-idle"}`}>
+                    {aiSourceFile ? "Ready for review" : "Ready to upload"}
                   </span>
                 </div>
 
                 {aiSourceFile && (
                   <>
-                    <div className="ai-detect-tags">
-                      {mockDetectedVitals.map((item) => (
-                        <span key={item.label} className="ai-detect-tag">
-                          {item.label}: {item.value}
-                        </span>
-                      ))}
+                    <div className="ai-detect-note">
+                      Review extracted values before applying them to the vitals form.
                     </div>
-                    <div className="ai-detect-footer">
+                    <div className="ai-detect-results">
+                      <div className="ai-detect-results-header">
+                        <div className="ai-detect-results-title">
+                          <CheckCircle2 size={16} /> Detected vitals
+                        </div>
+                        <div className="ai-detect-results-count">
+                          {mockDetectedVitals.length} fields found
+                        </div>
+                      </div>
+                      <div className="ai-detect-tags">
+                        {mockDetectedVitals.map((item) => (
+                          <span key={item.label} className="ai-detect-tag">
+                            {item.label}: {item.value}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="ai-detect-extra">
+                      <div className="ai-detect-extra-label">
+                        <FileText size={14} /> Additional observations
+                      </div>
+                      <textarea
+                        className="form-input ai-detect-textarea"
+                        rows={3}
+                        value={mockOtherDetections.join("\n")}
+                        placeholder="Other extracted observations"
+                        readOnly
+                      />
+                    </div>
+                    <div className="ai-detect-footer ai-detect-footer-actions">
                       <button type="button" className="btn btn-ghost" onClick={applyMockDetections}>
                         Apply detected values to form
                       </button>
                     </div>
                   </>
-                )}
-
-                <div className="ai-detect-extra">
-                  <div className="detail-item-label">Other</div>
-                  <textarea
-                    className="form-input"
-                    rows={2}
-                    value={mockOtherDetections.join("\n")}
-                    placeholder="Other extracted observations"
-                    readOnly
-                  />
-                </div>
-
-                {!aiSourceFile && (
-                  <div className="ai-detect-footer">
-                    <button type="button" className="btn btn-ghost" onClick={applyMockDetections}>
-                      Review in form after upload
-                    </button>
-                  </div>
                 )}
               </div>
 

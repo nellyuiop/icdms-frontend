@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import api from "@/app/lib/api";
 import { setAuthSession } from "@/app/lib/auth";
 
@@ -11,11 +12,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setError("");
+    setIsSubmitting(true);
+
     try {
       const response = await api.post("/auth/login", {
         email,
@@ -33,102 +38,92 @@ export default function LoginPage() {
       }
     } catch {
       setError("Invalid email or password.");
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <div style={{ padding: "2rem 0" }}>
-      <div
-        style={{
-          background:
-            "linear-gradient(135deg, #0b2b4a 0%, #1a4b76 50%, #2563eb 100%)",
-          color: "white",
-          padding: "2rem",
-          borderRadius: "16px",
-          marginBottom: "2rem",
-          textAlign: "center",
-        }}
-      >
-        <h1 style={{ fontSize: "2rem", fontWeight: 700 }}>ClinIQ</h1>
-        <p>Clinical Data Management System</p>
-      </div>
+    <main className="auth-page">
+      <div className="auth-shell">
+        <section className="auth-brand">
+          <p className="auth-wordmark" aria-label="ClinIQ">
+            Clin<span>IQ</span>
+          </p>
+          <h1>Clinical Data Management System</h1>
+          <p className="auth-brand-copy">
+            Secure, streamlined access to patient records, visits, vitals, and
+            laboratory documentation.
+          </p>
+        </section>
 
-      <div
-        style={{
-          maxWidth: "420px",
-          margin: "0 auto",
-          background: "white",
-          padding: "2rem",
-          borderRadius: "12px",
-          border: "1px solid #e5e7eb",
-        }}
-      >
-        <h2
-          style={{
-            marginBottom: "1.5rem",
-            textAlign: "center",
-            color: "#0b2b4a",
-          }}
-        >
-          Sign In
-        </h2>
-
-        {error && (
-          <div
-            style={{
-              background: "#fef2f2",
-              color: "#dc2626",
-              padding: "0.75rem",
-              borderRadius: "8px",
-              fontSize: "0.875rem",
-              marginBottom: "1rem",
-            }}
-          >
-            {error}
+        <section className="auth-panel">
+          <div className="auth-panel-header">
+            <h2>Sign In</h2>
+            <p className="auth-panel-copy">Enter your credentials to continue.</p>
           </div>
-        )}
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}
-            required
-          />
+          {error ? (
+            <div className="alert alert-error" role="alert" aria-live="polite">
+              {error}
+            </div>
+          ) : null}
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={inputStyle}
-            required
-          />
+          <form className="auth-form" onSubmit={handleLogin}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="email">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="admin@icdms.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="form-input auth-input"
+                required
+              />
+            </div>
 
-          <button style={buttonStyle}>Login</button>
-        </form>
+            <div className="form-group">
+              <label className="form-label" htmlFor="password">
+                Password
+              </label>
+              <div className="auth-password-field">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="form-input auth-input auth-input-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-dark btn-lg auth-submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          <p className="auth-footer">Protected clinical workspace</p>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "0.8rem",
-  marginBottom: "1rem",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "0.8rem",
-  background: "#0b2b4a",
-  color: "white",
-  border: "none",
-  borderRadius: "8px",
-  fontWeight: 600,
-  cursor: "pointer",
-};
