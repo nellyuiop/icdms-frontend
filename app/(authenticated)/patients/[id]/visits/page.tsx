@@ -50,7 +50,7 @@ type PatientSummary = {
 type MockDetection = {
   label: string;
   value: string;
-  confidence: string;
+  confidence?: string;
 };
 
 const buildVitalRows = (record?: VitalRecord | null): VitalDisplay[] => {
@@ -127,7 +127,11 @@ export default function PatientVisitsPage() {
   const [activeVisitNotes, setActiveVisitNotes] = useState("");
   const [notesSaving, setNotesSaving] = useState(false);
   const [vitalsSubmitting, setVitalsSubmitting] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [aiSourceFile, setAiSourceFile] = useState<File | null>(null);
+  const [detectedVitals, setDetectedVitals] = useState<MockDetection[]>([]);
+  const [others, setOthers] = useState<string[]>([]);
+  const [aiWarning, setAiWarning] = useState("");
   const [vitalsForm, setVitalsForm] = useState({
     bloodPressureSystolic: "",
     bloodPressureDiastolic: "",
@@ -177,39 +181,22 @@ export default function PatientVisitsPage() {
     () => visits.find((visit) => visit.id === activeVisitId) || null,
     [visits, activeVisitId]
   );
-
-  const mockDetectedVitals = useMemo<MockDetection[]>(
-    () =>
-      aiSourceFile
-        ? [
-            { label: "BP Systolic", value: "118", confidence: "97%" },
-            { label: "BP Diastolic", value: "76", confidence: "97%" },
-            { label: "Heart Rate", value: "72 bpm", confidence: "95%" },
-            { label: "Temperature", value: "36.9 C", confidence: "92%" },
-            { label: "Respiratory Rate", value: "16 /min", confidence: "90%" },
-            { label: "O2 Saturation", value: "98%", confidence: "96%" },
-          ]
-        : [],
-    [aiSourceFile]
-  );
-
-  const mockOtherDetections = useMemo(
-    () =>
-      aiSourceFile
-        ? [
-            "Pain score mentioned: 2/10",
-            "Weight mentioned: 68 kg",
-            "Clinician should review before saving",
-          ]
-        : [],
-    [aiSourceFile]
-  );
+  const isAbnormal = {
+    heartRate: Number(vitalsForm.heartRate) > 100,
+    temperature: Number(vitalsForm.temperature) > 38,
+    oxygenSaturation: Number(vitalsForm.oxygenSaturation) < 95,
+  };
 
   useEffect(() => {
     setActiveVisitNotes(activeVisit?.notes || "");
     if (activeVisit) {
       setExpandedVisit(activeVisit.id);
     }
+    setAiSourceFile(null);
+    setDetectedVitals([]);
+    setOthers([]);
+    setAiWarning("");
+    setAiLoading(false);
   }, [activeVisit]);
 
   const handleStartVisit = async (visitId: string, patientId: string) => {
@@ -299,22 +286,52 @@ export default function PatientVisitsPage() {
     aiUploadInputRef.current?.click();
   };
 
-  const handleAiSourceSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAiSourceSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    if (!file || !activeVisit) return;
+
     setAiSourceFile(file);
-  };
+    setAiLoading(true);
+    setAiWarning("");
+    setDetectedVitals([]);
+    setOthers([]);
 
-  const applyMockDetections = () => {
-    if (!aiSourceFile) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    setVitalsForm({
-      bloodPressureSystolic: "118",
-      bloodPressureDiastolic: "76",
-      heartRate: "72",
-      temperature: "36.9",
-      respiratoryRate: "16",
-      oxygenSaturation: "98",
-    });
+      const res = await api.post(
+        `/encounters/${activeVisit.id}/vitals/extract`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      const result = res.data;
+      const payload = result?.data ?? result;
+      const extracted = payload?.predefinedVitals ?? payload;
+
+      setVitalsForm({
+        bloodPressureSystolic: extracted.bloodPressureSystolic?.toString() || "",
+        bloodPressureDiastolic: extracted.bloodPressureDiastolic?.toString() || "",
+        heartRate: extracted.heartRate?.toString() || "",
+        temperature: extracted.temperature?.toString() || "",
+        respiratoryRate: extracted.respiratoryRate?.toString() || "",
+        oxygenSaturation: extracted.oxygenSaturation?.toString() || "",
+      });
+
+      setDetectedVitals(payload?.detectedVitals || []);
+      setOthers(payload?.others || []);
+
+      if (payload?.source?.usedMock) {
+        setAiWarning("AI unavailable - showing mock data.");
+      }
+    } catch (err) {
+      console.error(err);
+      setAiWarning("Failed to extract vitals.");
+    } finally {
+      setAiLoading(false);
+      e.target.value = "";
+    }
   };
 
   if (loading) return <p className="loading-text">Loading...</p>;
@@ -485,49 +502,69 @@ export default function PatientVisitsPage() {
                     </div>
                   </div>
                   <span className={`ai-detect-source-status${aiSourceFile ? "" : " is-idle"}`}>
-                    {aiSourceFile ? "Ready for review" : "Ready to upload"}
+                    {aiLoading
+                      ? "Processing..."
+                      : aiSourceFile
+                        ? "Ready for review"
+                        : "Ready to upload"}
                   </span>
                 </div>
+
+                {aiLoading && <div className="ai-detect-note">Extracting vitals...</div>}
+
+                {aiWarning && <div className="ai-detect-note">{aiWarning}</div>}
 
                 {aiSourceFile && (
                   <>
                     <div className="ai-detect-note">
-                      Review extracted values before applying them to the vitals form.
+                      Review extracted values before saving them to the visit.
                     </div>
-                    <div className="ai-detect-results">
-                      <div className="ai-detect-results-header">
-                        <div className="ai-detect-results-title">
-                          <CheckCircle2 size={16} /> Detected vitals
+
+                    {detectedVitals.length > 0 && (
+                      <div className="ai-detect-results">
+                        <div className="ai-detect-results-header">
+                          <div className="ai-detect-results-title">
+                            <CheckCircle2 size={16} /> Detected vitals
+                          </div>
+                          <div className="ai-detect-results-count">
+                            {detectedVitals.length} fields found
+                          </div>
                         </div>
-                        <div className="ai-detect-results-count">
-                          {mockDetectedVitals.length} fields found
+                        <div className="ai-detect-tags">
+                          {detectedVitals.map((item) => (
+                            <span key={item.label} className="ai-detect-tag">
+                              {item.label}: {item.value}
+                              {item.confidence ? ` (${item.confidence})` : ""}
+                            </span>
+                          ))}
                         </div>
                       </div>
-                      <div className="ai-detect-tags">
-                        {mockDetectedVitals.map((item) => (
-                          <span key={item.label} className="ai-detect-tag">
-                            {item.label}: {item.value}
-                          </span>
-                        ))}
+                    )}
+
+                    {(others.length > 0 || aiSourceFile) && (
+                      <div className="ai-detect-extra">
+                        <div className="ai-detect-extra-label">
+                          <FileText size={14} /> Additional observations
+                        </div>
+                        <textarea
+                          className="form-input ai-detect-textarea"
+                          rows={3}
+                          value={others.join("\n")}
+                          placeholder="Other extracted observations"
+                          readOnly
+                        />
                       </div>
-                    </div>
-                    <div className="ai-detect-extra">
-                      <div className="ai-detect-extra-label">
-                        <FileText size={14} /> Additional observations
+                    )}
+
+                    {(isAbnormal.heartRate ||
+                      isAbnormal.temperature ||
+                      isAbnormal.oxygenSaturation) && (
+                      <div style={{ marginTop: "0.5rem", fontSize: "0.8rem" }}>
+                        {isAbnormal.heartRate && "High heart rate "}
+                        {isAbnormal.temperature && "High temperature "}
+                        {isAbnormal.oxygenSaturation && "Low oxygen"}
                       </div>
-                      <textarea
-                        className="form-input ai-detect-textarea"
-                        rows={3}
-                        value={mockOtherDetections.join("\n")}
-                        placeholder="Other extracted observations"
-                        readOnly
-                      />
-                    </div>
-                    <div className="ai-detect-footer ai-detect-footer-actions">
-                      <button type="button" className="btn btn-ghost" onClick={applyMockDetections}>
-                        Apply detected values to form
-                      </button>
-                    </div>
+                    )}
                   </>
                 )}
               </div>
