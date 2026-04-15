@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import api from "@/app/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
 import PageBackLink from "@/components/PageBackLink";
+import ConfirmModal from "@/components/ConfirmModal";
 import { Play, Plus } from "lucide-react";
 import ScheduleVisitModal from "@/components/ScheduleVisitModal";
 
@@ -19,7 +20,14 @@ type EncounterApiRecord = {
   clinician?: { name?: string };
 };
 
-type FilterTab = "ALL" | "SCHEDULED" | "CHECKED_IN" | "IN_PROGRESS" | "COMPLETED";
+type FilterTab =
+  | "ALL"
+  | "SCHEDULED"
+  | "CHECKED_IN"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED";
+
 
 const statusBadgeClass = (status: string) => {
   const s = status.toLowerCase().replace("_", "-");
@@ -38,6 +46,8 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("ALL");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<EncounterApiRecord | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [error, setError] = useState("");
 
   const canSchedule = isAdmin || isStaff;
@@ -89,7 +99,20 @@ export default function AppointmentsPage() {
     { label: "Checked In", value: "CHECKED_IN" },
     { label: "In Progress", value: "IN_PROGRESS" },
     { label: "Completed", value: "COMPLETED" },
+    { label: "Cancelled", value: "CANCELLED" },
   ];
+
+  const confirmCancel = async () => {
+    if (!cancelTarget) return;
+
+    setCancelLoading(true);
+    try {
+      await updateStatus(cancelTarget.id, "CANCELLED");
+      setCancelTarget(null);
+    } finally {
+      setCancelLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -114,6 +137,19 @@ export default function AppointmentsPage() {
           setShowScheduleModal(false);
           fetchEncounters();
         }}
+      />
+
+      <ConfirmModal
+        open={!!cancelTarget}
+        title="Cancel Appointment"
+        message={`Are you sure you want to cancel ${
+          cancelTarget?.patient?.name || "this appointment"
+        }?`}
+        confirmLabel="Cancel Appointment"
+        confirmVariant="danger"
+        loading={cancelLoading}
+        onCancel={() => setCancelTarget(null)}
+        onConfirm={confirmCancel}
       />
 
       {error && <div className="alert alert-error" style={{ marginBottom: "1rem" }}>{error}</div>}
@@ -178,7 +214,10 @@ export default function AppointmentsPage() {
                             <button onClick={() => updateStatus(enc.id, "CHECKED_IN")} className="btn btn-sm btn-secondary">
                               Check In
                             </button>
-                            <button onClick={() => updateStatus(enc.id, "CANCELLED")} className="btn btn-sm btn-danger">
+                            <button
+                              onClick={() => setCancelTarget(enc)}
+                              className="btn btn-sm btn-danger"
+                            >
                               Cancel
                             </button>
                           </>
