@@ -19,6 +19,26 @@ type Patient = {
   gender?: string | null;
   notes?: string | null;
   external_id?: string;
+  contact_json?: string | null;
+  tags_json?: string | null;
+};
+
+type PatientContact = {
+  phone?: string;
+  email?: string;
+};
+
+const parsePatientContact = (contactJson?: string | null): PatientContact => {
+  if (!contactJson) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(contactJson) as PatientContact;
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
 };
 
 export default function PatientDetailPage() {
@@ -32,7 +52,14 @@ export default function PatientDetailPage() {
   const [error, setError] = useState("");
   const [actionError, setActionError] = useState("");
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", dob: "", gender: "", notes: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    dob: "",
+    gender: "",
+    phone: "",
+    email: "",
+    notes: "",
+  });
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -44,11 +71,14 @@ export default function PatientDetailPage() {
     const fetchPatient = async () => {
       try {
         const res = await api.get<Patient>(`/patients/${id}`);
+        const contact = parsePatientContact(res.data.contact_json);
         setPatient(res.data);
         setEditForm({
           name: res.data.name || "",
           dob: res.data.dob?.split("T")[0] || "",
           gender: res.data.gender || "",
+          phone: contact.phone || "",
+          email: contact.email || "",
           notes: res.data.notes || "",
         });
       } catch (err) {
@@ -89,6 +119,8 @@ export default function PatientDetailPage() {
   if (loading) return <p className="loading-text">Loading...</p>;
   if (error) return <div className="alert alert-error">{error}</div>;
   if (!patient) return null;
+
+  const patientContact = parsePatientContact(patient.contact_json);
 
   return (
     <div>
@@ -147,6 +179,25 @@ export default function PatientDetailPage() {
                 </select>
               </div>
             </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label className="form-label">Phone Number</label>
+                <input
+                  className="form-input"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </div>
+            </div>
             <div className="form-group">
               <label className="form-label">Notes</label>
               <textarea
@@ -177,6 +228,14 @@ export default function PatientDetailPage() {
               <div className="detail-item-value">
                 {patient.gender ? patient.gender.charAt(0) + patient.gender.slice(1).toLowerCase() : "---"}
               </div>
+            </div>
+            <div>
+              <div className="detail-item-label">Phone Number</div>
+              <div className="detail-item-value">{patientContact.phone || "---"}</div>
+            </div>
+            <div>
+              <div className="detail-item-label">Email Address</div>
+              <div className="detail-item-value">{patientContact.email || "---"}</div>
             </div>
             {patient.external_id && (
               <div>
