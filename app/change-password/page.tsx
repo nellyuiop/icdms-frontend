@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import api from "@/app/lib/api";
 import { getStoredUser, setAuthSession, getAccessToken } from "@/app/lib/auth";
 
@@ -10,6 +11,9 @@ export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -122,31 +126,67 @@ export default function ChangePasswordPage() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="password"
-            placeholder="Current Password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            style={inputStyle}
-            required
-          />
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            style={inputStyle}
-            required
-            minLength={8}
-          />
-          <input
-            type="password"
-            placeholder="Confirm New Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            style={inputStyle}
-            required
-          />
+          <div className="auth-password-field" style={{ marginBottom: "1rem" }}>
+            <input
+              type={showCurrentPassword ? "text" : "password"}
+              placeholder="Current Password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="form-input auth-input-password"
+              style={inputStyle}
+              required
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowCurrentPassword((current) => !current)}
+              aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+              aria-pressed={showCurrentPassword}
+            >
+              {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <div className="auth-password-field" style={{ marginBottom: "1rem" }}>
+            <input
+              type={showNewPassword ? "text" : "password"}
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="form-input auth-input-password"
+              style={inputStyle}
+              required
+              minLength={8}
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowNewPassword((current) => !current)}
+              aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+              aria-pressed={showNewPassword}
+            >
+              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <div className="auth-password-field" style={{ marginBottom: "1rem" }}>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm New Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="form-input auth-input-password"
+              style={inputStyle}
+              required
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              aria-pressed={showConfirmPassword}
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <button style={buttonStyle} disabled={submitting}>
             {submitting ? "Changing..." : "Change Password"}
           </button>

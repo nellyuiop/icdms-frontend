@@ -53,6 +53,24 @@ type MockDetection = {
   confidence?: string;
 };
 
+type VitalsFormState = {
+  bloodPressureSystolic: string;
+  bloodPressureDiastolic: string;
+  heartRate: string;
+  temperature: string;
+  respiratoryRate: string;
+  oxygenSaturation: string;
+};
+
+const emptyVitalsForm = (): VitalsFormState => ({
+  bloodPressureSystolic: "",
+  bloodPressureDiastolic: "",
+  heartRate: "",
+  temperature: "",
+  respiratoryRate: "",
+  oxygenSaturation: "",
+});
+
 const buildVitalRows = (record?: VitalRecord | null): VitalDisplay[] => {
   if (!record) {
     return [];
@@ -109,6 +127,50 @@ const formatVisitDate = (value?: string) =>
     day: "numeric",
   });
 
+const AI_OBSERVATIONS_HEADING = "AI Extracted Observations:";
+
+const formatAiObservationsBlock = (observations: string[]) =>
+  `${AI_OBSERVATIONS_HEADING}\n${observations.map((item) => `- ${item}`).join("\n")}`;
+
+const mergeVisitNotesWithObservations = (
+  existingNotes: string,
+  observations: string[]
+) => {
+  const trimmedNotes = existingNotes.trim();
+  const baseNotes = trimmedNotes.includes(AI_OBSERVATIONS_HEADING)
+    ? trimmedNotes.split(AI_OBSERVATIONS_HEADING)[0].trimEnd()
+    : trimmedNotes;
+
+  if (observations.length === 0) {
+    return baseNotes;
+  }
+
+  const observationsBlock = formatAiObservationsBlock(observations);
+  return baseNotes ? `${baseNotes}\n\n${observationsBlock}` : observationsBlock;
+};
+
+const parseVisitNotes = (notes?: string | null) => {
+  const rawNotes = notes?.trim() || "";
+
+  if (!rawNotes.includes(AI_OBSERVATIONS_HEADING)) {
+    return {
+      clinicianNotes: rawNotes,
+      aiObservations: [] as string[],
+    };
+  }
+
+  const [baseNotes, aiBlock] = rawNotes.split(AI_OBSERVATIONS_HEADING);
+  const aiObservations = (aiBlock || "")
+    .split("\n")
+    .map((line) => line.replace(/^- /, "").trim())
+    .filter(Boolean);
+
+  return {
+    clinicianNotes: baseNotes.trim(),
+    aiObservations,
+  };
+};
+
 export default function PatientVisitsPage() {
   const { isAdmin, isClinician } = useAuth();
   const params = useParams();
@@ -131,15 +193,10 @@ export default function PatientVisitsPage() {
   const [aiSourceFile, setAiSourceFile] = useState<File | null>(null);
   const [detectedVitals, setDetectedVitals] = useState<MockDetection[]>([]);
   const [others, setOthers] = useState<string[]>([]);
+  const [savedAiObservations, setSavedAiObservations] = useState<string[]>([]);
+  const [pendingVitalsForm, setPendingVitalsForm] = useState<VitalsFormState>(emptyVitalsForm);
   const [aiWarning, setAiWarning] = useState("");
-  const [vitalsForm, setVitalsForm] = useState({
-    bloodPressureSystolic: "",
-    bloodPressureDiastolic: "",
-    heartRate: "",
-    temperature: "",
-    respiratoryRate: "",
-    oxygenSaturation: "",
-  });
+  const [vitalsForm, setVitalsForm] = useState<VitalsFormState>(emptyVitalsForm);
 
   const canStartVisit = isAdmin || isClinician;
   const canDocumentVisit = isAdmin || isClinician;
@@ -188,13 +245,16 @@ export default function PatientVisitsPage() {
   };
 
   useEffect(() => {
-    setActiveVisitNotes(activeVisit?.notes || "");
+    const parsedNotes = parseVisitNotes(activeVisit?.notes);
+    setActiveVisitNotes(parsedNotes.clinicianNotes);
+    setSavedAiObservations(parsedNotes.aiObservations);
     if (activeVisit) {
       setExpandedVisit(activeVisit.id);
     }
     setAiSourceFile(null);
     setDetectedVitals([]);
     setOthers([]);
+    setPendingVitalsForm(emptyVitalsForm());
     setAiWarning("");
     setAiLoading(false);
   }, [activeVisit]);
@@ -217,7 +277,7 @@ export default function PatientVisitsPage() {
     try {
       await api.patch(`/encounters/${activeVisit.id}/status`, {
         status: activeVisit.status,
-        notes: activeVisitNotes,
+        notes: mergeVisitNotesWithObservations(activeVisitNotes, savedAiObservations),
       });
       await fetchData();
     } catch {
@@ -232,6 +292,12 @@ export default function PatientVisitsPage() {
     if (!activeVisit) return;
     setVitalsSubmitting(true);
     setActionError("");
+
+    const observationsToPersist = others.length > 0 ? others : savedAiObservations;
+    const mergedNotes = mergeVisitNotesWithObservations(
+      activeVisitNotes,
+      observationsToPersist
+    );
 
     const payload = {
       bloodPressureSystolic: vitalsForm.bloodPressureSystolic
@@ -253,15 +319,16 @@ export default function PatientVisitsPage() {
     };
 
     try {
+      if (mergedNotes !== activeVisitNotes.trim()) {
+        await api.patch(`/encounters/${activeVisit.id}/status`, {
+          status: activeVisit.status,
+          notes: mergedNotes,
+        });
+        setSavedAiObservations(observationsToPersist);
+      }
+
       await api.post(`/encounters/${activeVisit.id}/vitals`, payload);
-      setVitalsForm({
-        bloodPressureSystolic: "",
-        bloodPressureDiastolic: "",
-        heartRate: "",
-        temperature: "",
-        respiratoryRate: "",
-        oxygenSaturation: "",
-      });
+      setVitalsForm(emptyVitalsForm());
       await fetchData();
     } catch {
       setActionError("Failed to record vitals.");
@@ -310,7 +377,7 @@ export default function PatientVisitsPage() {
       const payload = result?.data ?? result;
       const extracted = payload?.predefinedVitals ?? payload;
 
-      setVitalsForm({
+      setPendingVitalsForm({
         bloodPressureSystolic: extracted.bloodPressureSystolic?.toString() || "",
         bloodPressureDiastolic: extracted.bloodPressureDiastolic?.toString() || "",
         heartRate: extracted.heartRate?.toString() || "",
@@ -332,6 +399,13 @@ export default function PatientVisitsPage() {
       setAiLoading(false);
       e.target.value = "";
     }
+  };
+
+  const hasPendingDetectedValues = Object.values(pendingVitalsForm).some(Boolean);
+
+  const applyDetectedValuesToForm = () => {
+    if (!hasPendingDetectedValues) return;
+    setVitalsForm({ ...pendingVitalsForm });
   };
 
   if (loading) return <p className="loading-text">Loading...</p>;
@@ -556,6 +630,18 @@ export default function PatientVisitsPage() {
                       </div>
                     )}
 
+                    {hasPendingDetectedValues && (
+                      <div className="ai-detect-footer ai-detect-footer-actions">
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          onClick={applyDetectedValuesToForm}
+                        >
+                          Apply detected values to form
+                        </button>
+                      </div>
+                    )}
+
                     {(isAbnormal.heartRate ||
                       isAbnormal.temperature ||
                       isAbnormal.oxygenSaturation) && (
@@ -687,7 +773,9 @@ export default function PatientVisitsPage() {
           {visits.map((visit) => {
             const isActive = activeVisit?.id === visit.id;
             const visitVitalRows = buildVitalRows(visit.vitals?.[0]);
-            const hasVisitNotes = Boolean(visit.notes?.trim());
+            const parsedVisitNotes = parseVisitNotes(visit.notes);
+            const hasVisitNotes = Boolean(parsedVisitNotes.clinicianNotes);
+            const hasAiObservations = parsedVisitNotes.aiObservations.length > 0;
             const hasVisitVitals = visitVitalRows.length > 0;
             return (
               <div
@@ -750,9 +838,31 @@ export default function PatientVisitsPage() {
                 {expandedVisit === visit.id && (
                   <div className="visit-card-body">
                     {hasVisitNotes ? (
-                      <div>{visit.notes}</div>
+                      <div style={{ whiteSpace: "pre-wrap" }}>
+                        {parsedVisitNotes.clinicianNotes}
+                      </div>
                     ) : (
                       <div style={{ color: "var(--gray-400)" }}>No notes recorded.</div>
+                    )}
+
+                    {hasAiObservations && (
+                      <div style={{ marginTop: "0.9rem" }}>
+                        <div
+                          style={{
+                            color: "var(--gray-500)",
+                            fontSize: "0.78rem",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                            marginBottom: "0.5rem",
+                          }}
+                        >
+                          AI Extracted Observations
+                        </div>
+                        <div style={{ whiteSpace: "pre-wrap" }}>
+                          {parsedVisitNotes.aiObservations.map((item) => `- ${item}`).join("\n")}
+                        </div>
+                      </div>
                     )}
 
                     <div style={{ marginTop: "0.9rem" }}>
