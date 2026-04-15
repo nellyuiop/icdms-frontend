@@ -68,8 +68,11 @@ export default function AdminUsersPage() {
       setShowForm(false);
       setForm({ name: "", email: "", password: "", role: "STAFF" });
       fetchUsers();
-    } catch {
-      setFormError("Failed to create user.");
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to create user.";
+      setFormError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -102,7 +105,9 @@ export default function AdminUsersPage() {
       setDeleteTarget(null);
       fetchUsers();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to delete user.";
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to deactivate user.";
       setActionError(msg);
       setDeleteTarget(null);
     } finally {
@@ -301,10 +306,10 @@ export default function AdminUsersPage() {
                             className="btn btn-sm btn-danger"
                             title={
                               isSelf(user.id)
-                                ? "Cannot delete your own account"
+                                ? "Cannot deactivate your own account"
                                 : isOnlyAdmin(user)
-                                  ? "Cannot delete the only admin"
-                                  : "Delete user"
+                                  ? "Cannot deactivate the only admin"
+                                  : "Deactivate user"
                             }
                             disabled={isSelf(user.id) || isOnlyAdmin(user)}
                           >
@@ -323,9 +328,9 @@ export default function AdminUsersPage() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete User"
-        message={`Are you sure you want to delete ${deleteTarget?.name || deleteTarget?.email || "this user"}? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title="Deactivate User"
+        message={`Are you sure you want to deactivate ${deleteTarget?.name || deleteTarget?.email || "this user"}? They will no longer be able to sign in.`}
+        confirmLabel="Deactivate"
         confirmVariant="danger"
         loading={deleting}
         onConfirm={handleDelete}

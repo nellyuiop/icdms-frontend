@@ -14,6 +14,8 @@ type PatientRecord = {
   name?: string;
   dob: string;
   gender?: string | null;
+  contact_json?: string | null;
+  notes?: string | null;
 };
 
 type PaginatedResponse = {
@@ -47,7 +49,14 @@ export default function PatientsPage() {
   const [scheduleTarget, setScheduleTarget] = useState<PatientRecord | null>(null);
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", dob: "", gender: "" });
+  const [form, setForm] = useState({
+    name: "",
+    dob: "",
+    gender: "",
+    phone: "",
+    email: "",
+    notes: "",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -121,7 +130,7 @@ export default function PatientsPage() {
     try {
       await api.post("/patients", form);
       setShowForm(false);
-      setForm({ name: "", dob: "", gender: "" });
+      setForm({ name: "", dob: "", gender: "", phone: "", email: "", notes: "" });
       fetchPatients();
     } catch (err) {
       console.error("Error creating patient:", err);
@@ -200,6 +209,41 @@ export default function PatientsPage() {
                   <option value="OTHER">Other</option>
                 </select>
               </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label className="form-label">Phone Number</label>
+                <input
+                  className="form-input"
+                  name="phone"
+                  placeholder="+961 70 111 222"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  name="email"
+                  placeholder="patient@example.com"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Patient Notes</label>
+              <textarea
+                className="form-input"
+                name="notes"
+                placeholder="Optional intake notes, follow-up context, or reminders..."
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={3}
+                style={{ resize: "vertical" }}
+              />
             </div>
             <button type="submit" disabled={submitting} className="btn btn-primary btn-lg">
               {submitting ? "Creating..." : "Create Patient"}
