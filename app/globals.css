@@ -1437,6 +1437,11 @@ tbody tr:last-child td {
   padding-right: 3.6rem;
 }
 
+.auth-input-password::-ms-reveal,
+.auth-input-password::-ms-clear {
+  display: none;
+}
+
 .auth-password-toggle {
   position: absolute;
   top: 1px;
