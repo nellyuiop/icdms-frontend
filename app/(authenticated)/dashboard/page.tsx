@@ -40,6 +40,18 @@ type UserRecord = {
   role: string;
 };
 
+const isSameLocalDay = (value?: string) => {
+  if (!value) return false;
+  const target = new Date(value);
+  const now = new Date();
+
+  return (
+    target.getFullYear() === now.getFullYear() &&
+    target.getMonth() === now.getMonth() &&
+    target.getDate() === now.getDate()
+  );
+};
+
 const statusAccentColor = (status: Appointment["status"]) => {
   if (status === "scheduled") return "#f59e0b";
   if (status === "checked-in") return "#0ea5e9";
@@ -73,19 +85,26 @@ export default function DashboardPage() {
 
     const loadAppointments = async () => {
       try {
-        const today = new Date().toISOString().split("T")[0];
-        const query = isClinician
-          ? `/encounters?date=${today}`
-          : `/encounters?status=SCHEDULED&date=${today}`;
+        const query = `/encounters`;
         const res = await api.get<EncounterApiRecord[]>(query);
         const data = res.data || [];
-        const visibleAppointments = isClinician
-          ? data.filter((enc) =>
-              ["CHECKED_IN", "IN_PROGRESS", "SCHEDULED"].includes(
-                enc.status.toUpperCase()
-              )
-            )
-          : data;
+        const visibleAppointments = data.filter((enc) => {
+          if (!isSameLocalDay(enc.visit_date || enc.scheduledAt)) {
+            return false;
+          }
+
+          const normalizedStatus = enc.status.toUpperCase();
+
+          if (isClinician) {
+            return ["CHECKED_IN", "IN_PROGRESS", "SCHEDULED"].includes(
+              normalizedStatus
+            );
+          }
+
+          return ["CHECKED_IN", "IN_PROGRESS", "SCHEDULED"].includes(
+            normalizedStatus
+          );
+        });
 
         if (isCancelled) {
           return;
@@ -291,7 +310,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                {isClinician && apt.status === "checked-in" && (
+                {(isClinician || isAdmin) && apt.status === "checked-in" && (
                   <button
                     onClick={() => handleStartVisit(apt.id, apt.patientId)}
                     className="btn btn-sm btn-primary"
@@ -299,7 +318,7 @@ export default function DashboardPage() {
                     <Play size={12} /> Start Visit
                   </button>
                 )}
-                {isClinician && apt.status === "in-progress" && (
+                {(isClinician || isAdmin) && apt.status === "in-progress" && (
                   <button
                     onClick={() =>
                       router.push(`/patients/${apt.patientId}/visits?activeVisit=${apt.id}`)
