@@ -182,7 +182,6 @@ export default function PatientVisitsPage() {
 
   const [visits, setVisits] = useState<EncounterApiRecord[]>([]);
   const [patient, setPatient] = useState<PatientSummary | null>(null);
-  const [vitals, setVitals] = useState<VitalDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedVisit, setExpandedVisit] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
@@ -203,10 +202,9 @@ export default function PatientVisitsPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [patientRes, encountersRes, vitalsRes] = await Promise.all([
+      const [patientRes, encountersRes] = await Promise.all([
         api.get<PatientSummary>(`/patients/${id}`),
         api.get<EncounterApiRecord[]>("/encounters"),
-        api.get<VitalRecord[]>(`/patients/${id}/vitals`),
       ]);
 
       setPatient(patientRes.data);
@@ -215,14 +213,6 @@ export default function PatientVisitsPage() {
         (enc) => enc.patient?.id === id || enc.patient_id === id
       );
       setVisits(patientVisits);
-
-      const latest = (vitalsRes.data || [])[0];
-      const rows = buildVitalRows(latest);
-      if (rows.length === 0) {
-        setVitals([]);
-        return;
-      }
-      setVitals(rows);
     } catch (err) {
       console.error("Error fetching visits:", err);
     } finally {
@@ -739,29 +729,6 @@ export default function PatientVisitsPage() {
                 </button>
               </form>
             </div>
-          </div>
-        </div>
-      )}
-
-      {vitals.length > 0 && (
-        <div className="card">
-          <h3
-            style={{
-              fontSize: "0.95rem",
-              fontWeight: 600,
-              color: "var(--primary)",
-              marginBottom: "0.75rem",
-            }}
-          >
-            Latest Vitals
-          </h3>
-          <div className="vitals-grid">
-            {vitals.map((v, index) => (
-              <div key={index}>
-                <div className="vital-item-label">{v.label}</div>
-                <div className="vital-item-value">{v.value}</div>
-              </div>
-            ))}
           </div>
         </div>
       )}
