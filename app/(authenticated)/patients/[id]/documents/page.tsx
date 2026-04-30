@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
@@ -16,12 +17,29 @@ type PatientDocument = {
   createdAt?: string;
   mimeType?: string;
   size?: number;
+  fileUrl?: string;
+  accessUrl?: string;
+  fileUrlExpiresAt?: string;
 };
 
 type PreviewState = {
   fileName: string;
   mimeType?: string;
   fileUrl: string;
+};
+
+type SignedFileAccessResponse = {
+  url: string;
+  expiresAt?: string;
+  expiresIn?: number;
+  fileName?: string;
+  mimeType?: string;
+};
+
+const revokePreviewUrl = (fileUrl?: string) => {
+  if (fileUrl?.startsWith("blob:")) {
+    URL.revokeObjectURL(fileUrl);
+  }
 };
 
 const formatFileSize = (size?: number) => {
@@ -70,9 +88,7 @@ export default function PatientDocumentsPage() {
 
   useEffect(() => {
     return () => {
-      if (preview?.fileUrl) {
-        URL.revokeObjectURL(preview.fileUrl);
-      }
+      revokePreviewUrl(preview?.fileUrl);
     };
   }, [preview]);
 
@@ -83,9 +99,7 @@ export default function PatientDocumentsPage() {
   };
 
   const closePreview = () => {
-    if (preview?.fileUrl) {
-      URL.revokeObjectURL(preview.fileUrl);
-    }
+    revokePreviewUrl(preview?.fileUrl);
     setPreview(null);
   };
 
@@ -122,27 +136,33 @@ export default function PatientDocumentsPage() {
     setActionError("");
 
     try {
-      const response = await api.get(`/patients/${id}/documents/${document.id}/file`, {
-        responseType: "blob",
-      });
+      const accessUrl = document.accessUrl || `/patients/${id}/documents/${document.id}/file`;
+      const response = await api.get<SignedFileAccessResponse>(accessUrl);
+      const signedUrl = response.data?.url || document.fileUrl;
 
-      const blob = new Blob([response.data], {
-        type: document.mimeType || response.headers["content-type"] || "application/octet-stream",
-      });
-      const blobUrl = URL.createObjectURL(blob);
-
-      if (preview?.fileUrl) {
-        URL.revokeObjectURL(preview.fileUrl);
+      if (!signedUrl) {
+        throw new Error("Missing signed document URL");
       }
 
+      revokePreviewUrl(preview?.fileUrl);
+
       setPreview({
-        fileName: document.fileName,
-        mimeType: document.mimeType || response.headers["content-type"] || undefined,
-        fileUrl: blobUrl,
+        fileName: response.data?.fileName || document.fileName,
+        mimeType: response.data?.mimeType || document.mimeType,
+        fileUrl: signedUrl,
       });
     } catch (error) {
-      console.error("Error opening document:", error);
-      setActionError("Failed to open document.");
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+      if (status !== 404) {
+        console.error("Error opening document:", error);
+      }
+
+      setActionError(
+        status === 404
+          ? "This file is missing from storage. Please re-upload it."
+          : "Failed to open document."
+      );
     } finally {
       setOpeningId(null);
     }

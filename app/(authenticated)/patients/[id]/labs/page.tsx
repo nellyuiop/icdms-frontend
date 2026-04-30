@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import api from "@/app/lib/api";
@@ -24,6 +25,8 @@ type LabAttachment = {
   mimeType?: string;
   size?: number;
   fileUrl?: string;
+  accessUrl?: string;
+  fileUrlExpiresAt?: string;
 };
 
 type LabRecord = {
@@ -40,6 +43,20 @@ type PreviewState = {
   fileName: string;
   mimeType?: string;
   fileUrl: string;
+};
+
+type SignedFileAccessResponse = {
+  url: string;
+  expiresAt?: string;
+  expiresIn?: number;
+  fileName?: string;
+  mimeType?: string;
+};
+
+const revokePreviewUrl = (fileUrl?: string) => {
+  if (fileUrl?.startsWith("blob:")) {
+    URL.revokeObjectURL(fileUrl);
+  }
 };
 
 const statusBadgeClass: Record<string, string> = {
@@ -104,9 +121,7 @@ export default function PatientLabsPage() {
 
   useEffect(() => {
     return () => {
-      if (preview?.fileUrl) {
-        URL.revokeObjectURL(preview.fileUrl);
-      }
+      revokePreviewUrl(preview?.fileUrl);
     };
   }, [preview]);
 
@@ -124,9 +139,7 @@ export default function PatientLabsPage() {
   };
 
   const closePreview = () => {
-    if (preview?.fileUrl) {
-      URL.revokeObjectURL(preview.fileUrl);
-    }
+    revokePreviewUrl(preview?.fileUrl);
     setPreview(null);
   };
 
@@ -163,27 +176,33 @@ export default function PatientLabsPage() {
     setActionError("");
 
     try {
-      const response = await api.get(`/patients/${id}/labs/${lab.id}/attachment`, {
-        responseType: "blob",
-      });
+      const accessUrl = lab.attachment?.accessUrl || `/patients/${id}/labs/${lab.id}/attachment`;
+      const response = await api.get<SignedFileAccessResponse>(accessUrl);
+      const signedUrl = response.data?.url || lab.attachment?.fileUrl;
 
-      const blob = new Blob([response.data], {
-        type: lab.attachment?.mimeType || response.headers["content-type"] || "application/octet-stream",
-      });
-      const blobUrl = URL.createObjectURL(blob);
-
-      if (preview?.fileUrl) {
-        URL.revokeObjectURL(preview.fileUrl);
+      if (!signedUrl) {
+        throw new Error("Missing signed lab attachment URL");
       }
 
+      revokePreviewUrl(preview?.fileUrl);
+
       setPreview({
-        fileName: lab.attachment?.fileName || `lab-${lab.id}`,
-        mimeType: lab.attachment?.mimeType || response.headers["content-type"] || undefined,
-        fileUrl: blobUrl,
+        fileName: response.data?.fileName || lab.attachment?.fileName || `lab-${lab.id}`,
+        mimeType: response.data?.mimeType || lab.attachment?.mimeType,
+        fileUrl: signedUrl,
       });
     } catch (error) {
-      console.error("Error opening lab attachment:", error);
-      setActionError("Failed to open lab attachment.");
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+      if (status !== 404) {
+        console.error("Error opening lab attachment:", error);
+      }
+
+      setActionError(
+        status === 404
+          ? "This file is missing from storage. Please re-upload it."
+          : "Failed to open lab attachment."
+      );
     } finally {
       setOpeningAttachmentId(null);
     }

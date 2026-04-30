@@ -44,8 +44,8 @@ export default function FilePreviewModal({
             <div className="modal-title" style={{ marginBottom: 0 }}>{fileName}</div>
           </div>
           <div style={{ display: "flex", gap: "0.5rem" }}>
-            <a href={fileUrl} download={fileName} className="btn btn-ghost">
-              <Download size={14} /> Download
+            <a href={fileUrl} target="_blank" rel="noreferrer" className="btn btn-ghost">
+              <Download size={14} /> Open in New Tab
             </a>
             <button onClick={onClose} className="btn btn-ghost">
               <X size={14} /> Close
@@ -70,7 +70,7 @@ export default function FilePreviewModal({
             )
           ) : (
             <div style={{ textAlign: "center", padding: "3rem 1rem", color: "var(--gray-500)" }}>
-              Preview is not available for this file type. Use download to open it.
+              Preview is not available for this file type. Use the new-tab button to open it.
             </div>
           )}
         </div>

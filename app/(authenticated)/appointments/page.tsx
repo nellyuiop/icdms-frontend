@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -54,11 +55,22 @@ export default function AppointmentsPage() {
   const canManage = isAdmin || isClinician;
 
   const fetchEncounters = async () => {
+    setError("");
     try {
       const res = await api.get<EncounterApiRecord[]>("/encounters");
       setEncounters(res.data || []);
     } catch (err) {
-      console.error("Error fetching encounters:", err);
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+
+      if (status !== 500) {
+        console.error("Error fetching encounters:", err);
+      }
+
+      setError(
+        status === 500
+          ? "Failed to load appointments. Refresh the page after the backend restarts."
+          : "Failed to load appointments."
+      );
     } finally {
       setLoading(false);
     }
