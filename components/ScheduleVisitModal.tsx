@@ -224,9 +224,17 @@ export default function ScheduleVisitModal({
     setError("");
 
     try {
+      const parsedVisitDate = new Date(visitDate);
+
+      if (Number.isNaN(parsedVisitDate.getTime())) {
+        setError("Please choose a valid visit date and time.");
+        setSubmitting(false);
+        return;
+      }
+
       await api.post("/encounters", {
         patientId: selectedPatient.id,
-        visitDate,
+        visitDate: parsedVisitDate.toISOString(),
         clinicianUserId: selectedClinician.id,
         reason: reason || undefined,
       });
